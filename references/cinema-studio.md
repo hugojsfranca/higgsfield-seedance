@@ -56,6 +56,8 @@ For comparison, `seedance_2_5` costs the same as 4.0 (3 / 6.5 / 9 per s), and `s
 - **3.5 look controls:** `camera_style`, `light_scheme` and `color_grading` can't be combined with `style_prompt`. Use one or the other.
 - **Media limits:** 3.5 and 3.0 take at most 15 media items in total (references plus start and end frames). 4.0 is assumed to follow Seedance 2.5's limits (30 images, 50 media), which is unverified.
 - **Price checks don't validate IDs.** `generate cost` checks names such as `--genre noir` on 3.5 and 3.0, but accepts any string as a 4.0 ID. A wrong ID only fails when the job is created, so check each new ID with a cheap 4 s job first.
+- **`generate cost` is not free on Soul Cast.** `higgsfield generate cost cinematic_studio_soul_cast` (and `soul_cast`) creates a real job and charges about 0.12 credits, measured on 17 September 2026. Price that engine by reading the rate here instead of running `cost`. Every other engine's `cost` call in this file was free.
+- **Transient failures happen.** A first Image 2.5 job failed with no reason and was refunded; the same command succeeded on the retry. Failed jobs are refunded (verified).
 
 ## Cinema Studio 4.0 controls
 
@@ -133,9 +135,11 @@ The linter covers the Cinema Studio video engines: `preflight.py --model cinemat
 
 ## Folders and projects
 
-- **Which engines:** Cinema Studio 3.0 and Cinema Studio Image 2.5 accept `--folder_id` (so do Marketing Studio and some utility models). Cinema Studio 4.0, 3.5, Seedance and the other image models don't, so jobs from those land in the account's general history.
-- **Finding the ID:** the web app's URLs carry folder IDs (`/generate/<mode>/<model>/folders/<folderId>`). Whether that is the same as a Cinema Studio 4.0 project folder is unverified, and the CLI has no command to list folders.
-- **Test first:** run one Image 2.5 still (2 credits) with the folder ID from a project's URL and check where it appears, before relying on this.
+**Verified on 17 September 2026:** a CLI job with `--folder_id` lands inside that folder of the Cinema Studio project, and shows up there in the web app (a failed one shows as "Failed — credits refunded", with Retry and Delete). A job without `--folder_id` stays in the account's general history, outside the project.
+
+- **Which engines:** Cinema Studio 3.0 and Cinema Studio Image 2.5 accept `--folder_id` (so do Marketing Studio and some utility models). Cinema Studio 4.0, 3.5, Seedance and the other image models don't, so their jobs can't be filed into a project from the CLI.
+- **Finding the ID:** the CLI has no folder listing. Ask the user for it, or read it from the project page in their browser: each folder row in the left-hand Folders list carries its ID as a `data-id` attribute, and folder URLs use `/generate/<mode>/<model>/folders/<folderId>`.
+- **Plan around it:** if everything must live in the project, route the stills to Image 2.5 and the video to Cinema Studio 3.0. Anything made on 4.0, 3.5 or Seedance has to be uploaded into the project by hand.
 - **Workspaces** (`higgsfield workspace`) are billing and team contexts, not projects.
 
 ## Commands
@@ -173,10 +177,10 @@ Run these before building a film on Cinema Studio, one at a time and each after 
 | Test | Settles | Cost |
 |---|---|---|
 | The same approved Seedance 2.5 prompt on 4.0 at 480p, 4 s, controls on Auto | Whether 4.0 with no controls behaves like `seedance_2_5` (its jobs report `model: default`) | 12 |
+| — | Folder filing: **done** (17 September 2026), see above | — |
 | One 4.0 clip with harvested genre, lens and light IDs | That harvested IDs work from the CLI, and how much they change the shot | 12 |
 | A 4.0 prompt with one camera-move tag | The tag syntax | 12 |
 | 3.0 with `--speedramp linear` on a move that ramped on 2.5 | That linear really removes the ramp | 14 |
-| An Image 2.5 still with a folder ID from a project URL | Whether CLI jobs can be filed into a Cinema Studio project | 2 |
 | A 4.0 start frame with a readable face | Face refusal behaviour on 4.0 | 12 |
 
 Also still unknown: which underlying model 3.0 and 3.5 use; the formats of `--color_palette`, `--light_custom` and `--multi_prompt`; and whether 4.0's reference limit is 50 as on the web.

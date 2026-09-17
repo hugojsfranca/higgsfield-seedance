@@ -86,7 +86,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/preflight.py edit.txt --image --edit    # 
 
 It flags asset IDs and cross-references, production notes, "no X" lists, gaze-at-camera wording, brands, settings written into the prose, keyword stacking, illustration triggers, overlong prompts, and edits that lack a CHANGE and PRESERVE EXACTLY block or leave a removal unfilled.
 
-Price for free, then run once the user has seen the cost:
+Price for free, then run once the user has seen the cost (the exception is Soul Cast, where `generate cost` creates a real job and charges about 0.12 credits):
 
 ```bash
 higgsfield generate cost nano_banana_pro --resolution 2k --aspect_ratio 16:9 --image-references ./portrait.png --prompt "$(cat still.txt)"

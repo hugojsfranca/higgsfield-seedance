@@ -123,7 +123,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/preflight.py prompt.txt --mode omni_refere
 
 ## 5. Price, confirm, generate
 
-`generate cost` is free and validates the whole command on the server without submitting anything:
+`generate cost` is free and validates the whole command on the server without submitting anything. The one exception found so far: Soul Cast (`soul_cast`, `cinematic_studio_soul_cast`) creates a real job and charges about 0.12 credits when you price it.
 
 ```bash
 higgsfield generate cost seedance_2_5 --mode t2v --duration 30 --resolution 480p --aspect_ratio 16:9 < prompt.txt
@@ -190,4 +190,5 @@ These points come from other Seedance 2.5 platforms and haven't been confirmed o
 
 - `@Image N` numbering follows the order of the `--image-references` flags. How start and end frames are numbered alongside image references is unknown. When you mix them, refer to the frames in words ("the start frame", "the end frame") and number only the references.
 - Face-reference refusal rates on Higgsfield's Seedance 2.5.
-- Whether refused or failed jobs refund their credits.
+
+Settled on 17 September 2026: failed jobs are refunded (a failed Cinema Studio Image 2.5 job was charged 2 credits and refunded the same minute).

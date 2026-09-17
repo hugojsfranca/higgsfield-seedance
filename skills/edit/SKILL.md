@@ -89,4 +89,4 @@ Give the result URL and a one-line summary (operation, duration, resolution, cre
 Test once at 480p (about 12 credits for 4 s) when it matters, and tell the user what you found:
 - whether a `video_extension` result contains the source plus the new footage or only the new part;
 - the longest source video Higgsfield accepts (the ByteDance API allows about 30 s of reference video per job);
-- whether refused or failed jobs refund their credits.
+- (settled on 17 September 2026: failed jobs are refunded.)
