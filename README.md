@@ -74,3 +74,7 @@ python3 scripts/optics.py 85mm 3m
 
 - Built from the Seedance 2.5 prompting skill by [InstaSD](https://www.instasd.com/post/seedance-2-5-claude-prompting-skill) (v1.1), then substantially reworked and extended for Higgsfield. Some examples in `references/prompt-patterns.md` come from that skill.
 - `references/shot-direction.md` is adapted from Higgsfield's CINEDANCE V4 prompt-director guide for Seedance.
+
+## License
+
+[MIT](LICENSE)
