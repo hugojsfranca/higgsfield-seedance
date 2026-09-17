@@ -1,0 +1,15 @@
+# Test briefs and eval runs hold client material; keep them local
+evals/
+
+# Film work produced while using the skill
+jobs/
+clips/
+gates/
+assets/manifest.csv
+
+# Build and OS clutter
+*.skill
+*.zip
+__pycache__/
+*.pyc
+.DS_Store
