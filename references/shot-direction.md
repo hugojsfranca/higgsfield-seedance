@@ -1,6 +1,6 @@
 # Shot direction
 
-Adapted from Higgsfield's own prompt-director guide for Seedance 2.0 ("CINEDANCE V4"). The guide treats a prompt as direction for one shot: who stands where, what the lens shows, where the light comes from, and what happens when. It applies directly to shots routed to Seedance 2.0. It should carry over to Seedance 2.5 as the same model family, but that hasn't been separately verified. This file condenses the guide and reconciles it with what this skill learned in testing.
+Adapted from Higgsfield's own prompt-director guide for Seedance 2.0 ("CINEDANCE V4"). The guide treats a prompt as direction for one shot: who stands where, what the lens shows, where the light comes from, and what happens when. It applies directly to shots routed to Seedance 2.0. It should carry over to Seedance 2.5 as the same model family, but that hasn't been separately verified. This file condenses the guide and reconciles it with what this plugin learned in testing.
 
 ## Contents
 

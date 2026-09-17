@@ -1,55 +1,66 @@
-# Seedance on Higgsfield: a Claude skill
+# higgsfield-seedance
 
-A skill for Claude that writes, checks, prices and runs **ByteDance Seedance 2.5** (and 2.0) video prompts on [Higgsfield](https://higgsfield.ai) through the `higgsfield` CLI.
+A Claude Code plugin for making **ByteDance Seedance 2.5** (and 2.0) videos on [Higgsfield](https://higgsfield.ai) through the `higgsfield` CLI.
 
-Most bad Seedance results come from how the prompt is built, not from the settings: beats that merge or vanish, left and right flipped, lenses drifting, invented lettering, endings that freeze. The skill directs the shot first, then writes a prompt that holds up over a long take, lints it locally and prices it for free before any credits are spent.
+Most bad Seedance results come from how the prompt is built, not from the settings: beats that merge or vanish, left and right flipped, lenses drifting, invented lettering, endings that freeze. The plugin directs the shot first, then writes a prompt that holds up over a long take, lints it locally and prices it for free before any credits are spent.
 
-## What it covers
+## Actions
 
-- **Single clips up to 30 s** on Seedance 2.5: timestamped beats, cuts inside one take, voiceover and on-screen text.
-- **Reference-driven video** with `@Image` / `@Video` / `@Audio`, and start/end-frame transitions.
-- **Editing and extending** existing clips, forward or backward.
-- **Routing to Seedance 2.0** for readable faces and other cases where it's the better model.
-- **Multi-scene films:** shot list, asset bible, reference library, face tests, screen plates, budget scenarios and approval gates.
+| Command | What it does | Spends credits? |
+|---|---|---|
+| `/higgsfield-seedance:generate` | Brief → model and mode → prompt → lint → free price check → run → deliver | Yes, after showing you the cost |
+| `/higgsfield-seedance:prompt` | Write, fix, review or lint a video or keyframe prompt | Never |
+| `/higgsfield-seedance:plan` | Plan a multi-scene film: shot list, asset bible, face tests, budget, gates, run scripts | No (planning only) |
+| `/higgsfield-seedance:edit` | Edit, extend, chain, join or upscale an existing clip | Yes, after showing you the cost |
 
-It asks before anything paid. Every run is linted and priced first, and staged run scripts ask y/N before they spend.
+You can type a command with a description after it (`/higgsfield-seedance:generate a 12 s aerial of a cargo ship at dawn`), or just describe what you want and Claude picks the right action.
 
 ## Install
 
-### Claude Code
-
-Clone the repo into your skills folder. The folder name should match the skill's `name`.
+### From GitHub
 
 ```bash
-git clone https://github.com/hugojsfranca/higgsfield-seedance-skill.git ~/.claude/skills/higgsfield-seedance-2-5
+claude plugin marketplace add hugojsfranca/higgsfield-seedance
+claude plugin install higgsfield-seedance@hugojsfranca
 ```
 
-Start a new Claude Code session. The skill loads when you ask for a Seedance or Higgsfield video.
-
-### Claude.ai / Claude desktop
-
-Zip the folder without `.git` and upload it under **Settings → Capabilities → Skills**:
+Start a new Claude Code session. To pick up later changes:
 
 ```bash
-cd ~/.claude/skills && zip -r higgsfield-seedance-2-5.zip higgsfield-seedance-2-5 -x '*/.git/*' '*/evals/*' '*.DS_Store'
+claude plugin marketplace update hugojsfranca && claude plugin update higgsfield-seedance@hugojsfranca
 ```
+
+### For local development
+
+Clone the repo anywhere and link it into your skills folder. Claude Code loads it as a plugin (`higgsfield-seedance@skills-dir`), and edits take effect in the next session with no reinstall:
+
+```bash
+git clone https://github.com/hugojsfranca/higgsfield-seedance.git
+ln -s "$PWD/higgsfield-seedance" ~/.claude/skills/higgsfield-seedance
+```
+
+Check it with `claude plugin details higgsfield-seedance`. Don't use both install methods at once, or the actions appear twice.
 
 ## Requirements
 
-- **Higgsfield CLI**, signed in: `curl -fsSL https://raw.githubusercontent.com/higgsfield-ai/cli/main/install.sh | sh`, then log in.
+- **Higgsfield CLI**, signed in: `curl -fsSL https://raw.githubusercontent.com/higgsfield-ai/cli/main/install.sh | sh`, then `higgsfield auth login`.
 - **python3** for the linter and planning tools. They use only the standard library.
-- **ffmpeg** for extracting last frames when chaining clips.
+- **ffmpeg** for last frames, trims and joins.
 
 ## What's inside
 
 | Path | Purpose |
 |---|---|
-| `SKILL.md` | Routing (2.5 vs 2.0), the brief, modes, prompt rules, faces, preflight, run and delivery |
-| `references/prompt-patterns.md` | Five prompt shapes with examples, and camera language |
+| `.claude-plugin/` | Plugin manifest, and a marketplace file so this repo installs directly |
+| `skills/generate/` | Routing (2.5 vs 2.0), brief, modes, one take vs one clip per shot, price, run, deliver, errors |
+| `skills/prompt/` | Shot direction, prompt shape, the 17 rules, faces, keyframe prompts, preflight |
+| `skills/plan/` | Film workflow: brief review, routing, shot list, asset bible, budget, gates, review |
+| `skills/edit/` | Edit, extend, chain, upscale and join |
+| `references/prompt-patterns.md` | Five prompt shapes with worked examples, and camera language |
 | `references/shot-direction.md` | Blocking, gaze, screen direction, optics, lighting, cut types, dialogue |
-| `references/first-last-frame.md` | Start/end-frame transitions and chaining |
-| `references/edit-extend-chain.md` | Editing and extending clips |
-| `references/film-planning.md` | Multi-scene pipeline: gates, shot list, asset bible, budget, resolution strategy |
+| `references/first-last-frame.md` | Start/end-frame transitions |
+| `references/edit-extend-chain.md` | Edit and extension prompts, chaining past 30 s |
+| `references/film-planning.md` | Pipeline and gates, shot-list format, asset bible, face tests, budget, resolution strategy |
 | `scripts/preflight.py` | Lints a video or keyframe prompt against the settings you plan to submit |
 | `scripts/shotlist_check.py` | Validates a film shot list: timing, durations, modes, missing prompts, credit estimate |
 | `scripts/optics.py` | Frame size for a lens at a distance, to sanity-check scale in a prompt |
@@ -57,7 +68,7 @@ cd ~/.claude/skills && zip -r higgsfield-seedance-2-5.zip higgsfield-seedance-2-
 | `scripts/film_run_template.sh` | Staged run script for one act: lint, cost, canary, clips, upscale, gates |
 | `scripts/last_frame.sh` | Extracts a clip's last frame for chaining |
 
-Run the scripts on their own:
+The scripts also run on their own:
 
 ```bash
 python3 scripts/preflight.py prompt.txt --duration 12 --mode omni_reference --start-image

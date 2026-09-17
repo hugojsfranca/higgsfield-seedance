@@ -84,7 +84,7 @@ def main():
         if model == "post":
             continue
         if model not in LIMITS:
-            warns.append(f"{cid}: model '{model}' isn't one this skill routes to; check `higgsfield model get {model}`")
+            warns.append(f"{cid}: model '{model}' isn't one this plugin routes to; check `higgsfield model get {model}`")
             continue
         lo, hi = LIMITS[model]
         if secs != int(secs) or not lo <= secs <= hi:

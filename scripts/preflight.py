@@ -223,7 +223,7 @@ def main():
             warns.append(f"'{note.group(0)[:60]}' reads like a production note and can end up in the image; fold it in or drop it")
         nos = NO_ITEM.findall(unq)
         if len(nos) >= 2 or EXCLUSION_HEADER.search(unq):
-            warns.append(f"{len(nos)} 'no X' phrases; negative lists summon what they name. State what IS there (rule 5)")
+            warns.append(f"{len(nos)} 'no X' phrases; negative lists summon what they name. State what IS there (prompt rule 5)")
         for hit in (BRANDS.search(unq), GAZE.search(unq), PLACEHOLDER.search(text)):
             if hit:
                 warns.append(f"'{hit.group(0)}': brand, gaze wording or placeholder; rewrite")

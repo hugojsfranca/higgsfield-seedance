@@ -45,7 +45,7 @@ sparkle audio, a light juice-fill sound, glass clinks, and a quick running sound
 
 ## Craft rules
 
-- **Don't describe what the frames show, only what changes between them.** Restating the start frame invites the model to reinvent it. This fits with SKILL.md rule 14 (lock the first frame): lock only what the action depends on (who, where, which hand) in about 25 words, and add "as in the start frame".
+- **Don't describe what the frames show, only what changes between them.** Restating the start frame invites the model to reinvent it. This fits with prompt rule 14 (lock the first frame): lock only what the action depends on (who, where, which hand) in about 25 words, and add "as in the start frame".
 - **The end frame is a target state, not a guaranteed final pixel.** End the prompt with the subject arriving at that state and holding: "the final shot holds on the filled bottle".
 - **Quote the voiceover line exactly and add** `The voiceover must finish before the video ends.` An empty quote or a `[your line here]` slot is a decision nobody has made yet. Fill it, or ask the user, before generating.
 - **When audio is on, list the sound effects by event.** Listed sounds land on their actions, and unlisted ones get invented or skipped.

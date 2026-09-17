@@ -169,7 +169,7 @@ outward in all directions — youthful, energetic, share-worthy.
 
 State the single-camera rule in the first sentence. Split the film into roughly 5 s chapters; each gets a theme, a style (which may change mid-chapter) and one event. End on a snap.
 
-The protagonist is written in words, not wired from a photo (see *Faces* in SKILL.md), and is kept mostly in profile or from behind, which also makes the final frame safe to chain from.
+The protagonist is written in words, not wired from a photo (see *Faces* in the prompt skill), and is kept mostly in profile or from behind, which also makes the final frame safe to chain from.
 
 *Settings: `omni_reference`, 7 images, generated audio on, 30 s.*
 

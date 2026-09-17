@@ -72,14 +72,14 @@ A first/last-frame chain is also the fix when a run of extensions starts driftin
 **Extracting the last frame:**
 
 ```bash
-bash <this-skill-dir>/scripts/last_frame.sh <job_id|url|path> chain_01.png
+bash <plugin-root>/scripts/last_frame.sh <job_id|url|path> chain_01.png
 higgsfield generate create seedance_2_5 --mode omni_reference --start-image ./chain_01.png \
   --duration 30 --resolution 720p --aspect_ratio 16:9 --wait --wait-timeout 30m < part2.txt
 ```
 
 `last_frame.sh` takes a job ID (it looks up the result URL), a URL or a local file.
 
-**Plan the break frames.** A chain frame with a large, readable face gets refused, consistently rather than at random. Stage the last beat of each clip so people are small, turned away, helmeted or out of focus, and describe the character in text in every clip, word for word. Rule 9 ("keep the clip self-contained") in SKILL.md pays off here: a clip that ends on a well-described held frame is easy to chain from.
+**Plan the break frames.** A chain frame with a large, readable face gets refused, consistently rather than at random. Stage the last beat of each clip so people are small, turned away, helmeted or out of focus, and describe the character in text in every clip, word for word. Prompt rule 9 ("keep the clip self-contained") pays off here: a clip that ends on a well-described held frame is easy to chain from.
 
 **The part-2 prompt** follows the first/last-frame rules: describe the journey onward from the start frame, not the frame itself.
 

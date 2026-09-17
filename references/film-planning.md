@@ -42,7 +42,7 @@ scene,shot,description,film_in,film_out,film_seconds,clip_id,model,mode,clip_sec
 - **Timings:** `film_in` and `film_out` run continuously from 0 to the film's length. `film_seconds` is the slice used in the edit.
 - **Durations:** `clip_seconds` is what gets generated. Seedance 2.5 takes 4–30, Seedance 2.0 takes 4–15.
 - **Reuse:** a `model` of `post` (with `clip_seconds` 0) marks a slice reused from another clip, or a still with a push. Reuse cuts cost a lot, e.g. a later scene that reprises earlier overheads.
-- **Actions:** `primary_action` is the clip's only action (rule 2).
+- **Actions:** `primary_action` is the clip's only action (prompt rule 2).
 - **Cut notes:** `cut_note` names the slice window (`use 1.5–2.8`) and any match cut it serves. Leave no row without a window.
 - **IDs, not paths:** `start_keyframe`, `end_keyframe` and `object_refs` hold asset IDs, never file paths. A first/last-frame clip puts its end frame in `end_keyframe`, not in the same field as the start. Mark existing approved takes with "approved" in `cut_note`.
 - **Files:** name prompt files `prompts/<clip_id>.txt` and keyframes `keyframes/<start_keyframe>.txt`, with the approved still next to each as `.png`.
@@ -62,7 +62,7 @@ A table of every recurring person, object and place, each with an ID, a filename
   - vehicle orientation, e.g. the held trailer is backed onto the centre bay;
   - sun direction by time of day, e.g. the HQ is lit from the left in late morning and from the right at golden hour.
   Each shot restates the map converted to frame terms (Sides table in `shot-direction.md`). Reverse angles swap every frame side.
-- **Hands:** set each character's dominant hand and which hand holds each prop, and convert body sides to frame sides in every prompt. The bible overrides any example in this skill.
+- **Hands:** set each character's dominant hand and which hand holds each prop, and convert body sides to frame sides in every prompt. The bible overrides any example in this plugin.
 - **Wardrobe lines:** word for word in every keyframe prompt, never paraphrased.
 - **Look-alikes:** props that could be confused get distinct looks, e.g. a grey component case, an orange adapter case and a black equipment case.
 - **Cast and props:** drop characters and props no scene uses. Add anyone who recurs without a description, such as a security coordinator seen in six shots.
@@ -76,7 +76,7 @@ A table of every recurring person, object and place, each with an ID, a filename
   - When a reference fixes framing or light (a relit plate, an approved still), copy its distance, lens and light side into the text.
   - When a reference carries only appearance, say what to take ("hands and cuffs only").
   - Attach a location plate beside a start frame only when the camera reveals space beyond the still.
-- **Prefixes by asset type:** a single global "quality prefix" that says "real people at work" fights the people-free plates and object shots. Keep separate prefixes for people, objects and environments. Each is positive only: rule 5 applies to image prompts too. For example, "no text, no logos, no CGI" becomes "every surface plain and unbranded; photographed on a real location".
+- **Prefixes by asset type:** a single global "quality prefix" that says "real people at work" fights the people-free plates and object shots. Keep separate prefixes for people, objects and environments. Each is positive only: prompt rule 5 applies to image prompts too. For example, "no text, no logos, no CGI" becomes "every surface plain and unbranded; photographed on a real location".
 
 ## Faces: threshold, tests and routing
 

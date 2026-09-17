@@ -1,0 +1,12 @@
+{
+  "name": "higgsfield-seedance",
+  "description": "Generate, prompt, plan and edit ByteDance Seedance 2.5 and 2.0 videos on Higgsfield through the higgsfield CLI.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Hugo França"
+  },
+  "homepage": "https://github.com/hugojsfranca/higgsfield-seedance",
+  "repository": "https://github.com/hugojsfranca/higgsfield-seedance",
+  "license": "MIT",
+  "keywords": ["higgsfield", "seedance", "video", "ai-video", "prompting", "film-planning"]
+}

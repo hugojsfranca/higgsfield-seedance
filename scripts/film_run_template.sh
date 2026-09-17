@@ -16,7 +16,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-SKILL_DIR="${SKILL_DIR:-../../higgsfield-seedance-2-5}"   # pin: set to the skill copy these prompts were written under
+SKILL_DIR="${SKILL_DIR:-../../higgsfield-seedance}"   # pin: set to the plugin folder (or copy) these prompts were written under
 PREFLIGHT="$SKILL_DIR/scripts/preflight.py"
 MANIFEST="${MANIFEST:-../assets/manifest.csv}"
 RES="${RES:-480p}"
