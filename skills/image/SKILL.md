@@ -44,7 +44,7 @@ If it's part of a film, check the bible for the character's wardrobe line, the l
 
 Use the routing table in `image-prompts.md`. The defaults:
 - **Invented character portrait:** Soul 2.0 (`text2image_soul_v2`), or Soul Cinematic (`soul_cinematic`) for a film look. For a real person the user has rights to, use a Soul ID.
-- **Extra views and keyframes from references:** Nano Banana Pro (`nano_banana_pro`) at 2k.
+- **Extra views and keyframes from references:** Nano Banana Pro (`nano_banana_pro`) at 2k. When the film is made in Cinema Studio, or the still should be filed into one of its folders, use Cinema Studio Image 2.5 (`cinematic_studio_2_5`, same price, `--folder_id`). See `${CLAUDE_PLUGIN_ROOT}/references/cinema-studio.md`.
 - **People-free locations:** Soul Location (`soul_location`).
 - **Props with exact geometry or lettering:** GPT Image 2 (`gpt_image_2`).
 - **Edits:** Nano Banana Pro first; Seedream 4.5 (`seedream_v4_5`) only for textures; GPT Image 2 last.

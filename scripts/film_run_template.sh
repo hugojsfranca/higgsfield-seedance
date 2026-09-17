@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run-script template for one act of a Seedance film on Higgsfield (see references/film-planning.md).
+# Run-script template for one act of a Seedance or Cinema Studio film on Higgsfield (see references/film-planning.md).
 # Copy it next to the act's prompts/ and keyframes/ folders, fill in CLIPS, and run the stages in order.
 #
 #   ./run.sh lint                 lint every prompt (free, local)
@@ -17,15 +17,20 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 SKILL_DIR="${SKILL_DIR:-../../higgsfield-seedance}"   # pin: set to the plugin folder (or copy) these prompts were written under
+STUDIO_IDS="$SKILL_DIR/scripts/studio_ids.py"
 PREFLIGHT="$SKILL_DIR/scripts/preflight.py"
 MANIFEST="${MANIFEST:-../assets/manifest.csv}"
 RES="${RES:-480p}"
 REQUIRED_GATE="${REQUIRED_GATE:-G1}"                       # paid clip stages need this approval marker
 
-# clip_id | model | mode | seconds | start frame (asset ID[:view] or -) | refs (comma list of ID[:view] or -) | audio on/off
+# clip_id | model | mode (- for Cinema Studio 3.5/3.0) | seconds | start frame (asset ID[:view] or -) |
+# refs (comma list of ID[:view] or -) | audio on/off | look controls (- or flags; @kind:Name looks up a harvested ID,
+# with _ for spaces, e.g. @camera_model:35mm_Film; catalog from scripts/studio_ids.py harvest)
 CLIPS="
-S03_A|seedance_2_5|omni_reference|4|KF_S03_A|OBJ01:main|off
-S03_C|seedance_2_0|std|4|KF_S03_C|CH04:portrait|off
+S03_A|seedance_2_5|omni_reference|4|KF_S03_A|OBJ01:main|off|-
+S03_C|seedance_2_0|std|4|KF_S03_C|CH04:portrait|off|-
+S04_A|cinematic_studio_video_4_0|omni_reference|4|KF_S04_A|-|off|--genre_id @genre:Drama --camera_lens_id @camera_lens:Anamorphic
+S04_B|cinematic_studio_3_0|-|6|KF_S04_B|-|off|--speedramp linear --genre drama
 "
 
 run() { if [[ "${DRY:-0}" == 1 ]]; then printf 'DRY:'; printf ' %q' "$@"; echo; else "$@"; fi; }
@@ -36,11 +41,31 @@ assets() { python3 "$SKILL_DIR/scripts/assets.py" --manifest "$MANIFEST" "$@"; }
 next_take() { local n=1; while [[ -e "jobs/${1}_${RES}_t${n}.json" ]]; do n=$((n + 1)); done; echo "jobs/${1}_${RES}_t${n}.json"; }
 need_gate() { [[ "${DRY:-0}" == 1 || -e "gates/$1.ok" ]] || { echo "gate $1 not approved yet (./run.sh gate $1)" >&2; exit 1; }; }
 
-build_flags() {   # fills the global FLAGS array for one clip row; exits the script if an asset won't resolve
-  local row="$1" mode secs start refs audio r path
-  mode=$(field "$row" 3); secs=$(field "$row" 4); start=$(field "$row" 5); refs=$(field "$row" 6); audio=$(field "$row" 7)
-  FLAGS=(--mode "$mode" --duration "$secs" --resolution "$RES" --aspect_ratio 16:9 --bitrate_mode high)
-  [[ "$audio" == off ]] && FLAGS+=(--generate_audio false)
+uses_stdin() { [[ "$1" == seedance_* ]]; }   # Seedance takes the prompt on stdin; Cinema Studio gets --prompt (stdin untested there)
+
+build_flags() {   # fills the global FLAGS array for one clip row; exits the script if an asset or control ID won't resolve
+  local row="$1" model mode secs start refs audio looks r path word kind name id
+  model=$(field "$row" 2); mode=$(field "$row" 3); secs=$(field "$row" 4); start=$(field "$row" 5); refs=$(field "$row" 6)
+  audio=$(field "$row" 7); looks=$(field "$row" 8)
+  FLAGS=(--duration "$secs" --resolution "$RES" --aspect_ratio 16:9)
+  case "$model" in
+    seedance_2_5|cinematic_studio_video_4_0) FLAGS+=(--mode "$mode" --bitrate_mode high) ;;
+    seedance_2_0) FLAGS+=(--mode "$mode") ;;
+    cinematic_studio_video_3_5|cinematic_studio_3_0) FLAGS+=(--prompt_language en) ;;   # these default to zh
+    *) echo "unknown model $model" >&2; exit 1 ;;
+  esac
+  if [[ "$audio" == off ]]; then FLAGS+=(--generate_audio false); else FLAGS+=(--generate_audio true); fi
+  if [[ -n "$looks" && "$looks" != "-" ]]; then
+    for word in $looks; do
+      if [[ "$word" == @*:* ]]; then
+        kind=${word#@}; kind=${kind%%:*}; name=${word#*:}; name=${name//_/ }
+        id=$(python3 "$STUDIO_IDS" find "$kind" "$name") || { echo "no harvested $kind '$name'; use it once in the web app, then: python3 $STUDIO_IDS harvest" >&2; exit 1; }
+        FLAGS+=("$id")
+      else
+        FLAGS+=("$word")
+      fi
+    done
+  fi
   if [[ "$start" != "-" ]]; then
     path=$(assets resolve "$start") || { echo "start frame $start isn't in the manifest; approve and record it first" >&2; exit 1; }
     FLAGS+=(--start-image "$path")
@@ -60,14 +85,24 @@ make_clip() {
   build_flags "$row"
   mkdir -p jobs clips
   out=$(next_take "$id")
+  uses_stdin "$model" || FLAGS+=(--prompt "$(cat "prompts/$id.txt")")
   if [[ "${DRY:-0}" == 1 ]]; then
     run higgsfield generate create "$model" "${FLAGS[@]}" --wait --wait-timeout 30m --json
     return 0
   fi
-  higgsfield generate create "$model" "${FLAGS[@]}" --wait --wait-timeout 30m --json < "prompts/$id.txt" > "$out"
-  url=$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); d=d[0] if isinstance(d,list) else d; print(d.get("result_url") or "")' "$out")
+  if uses_stdin "$model"; then
+    higgsfield generate create "$model" "${FLAGS[@]}" --wait --wait-timeout 30m --json < "prompts/$id.txt" > "$out"
+  else
+    higgsfield generate create "$model" "${FLAGS[@]}" --wait --wait-timeout 30m --json < /dev/null > "$out"
+  fi
+  url=$(python3 -c '
+import json, sys
+try:
+    d = json.load(open(sys.argv[1])); d = d[0] if isinstance(d, list) else d; print(d.get("result_url") or "")
+except (ValueError, IndexError, AttributeError):
+    print("")' "$out")
   [[ -n "$url" ]] || { echo "$id: no result (refused or failed); see $out" >&2; return 1; }
-  curl -fsSL -o "clips/$(basename "$out" .json).mp4" "$url"
+  curl -fsSL -o "clips/$(basename "$out" .json).mp4" "$url" || { echo "$id: download failed; the job record is in $out" >&2; return 1; }
   echo "$id -> clips/$(basename "$out" .json).mp4"
 }
 
@@ -76,17 +111,20 @@ case "${1:-}" in
     echo "$CLIPS" | while IFS= read -r row; do
       [[ -z "$row" ]] && continue
       id=$(field "$row" 1); model=$(field "$row" 2); mode=$(field "$row" 3); secs=$(field "$row" 4)
-      extra=(); [[ $(field "$row" 5) != "-" ]] && extra+=(--start-image)
+      extra=(); [[ "$mode" != "-" ]] && extra+=(--mode "$mode")
+      [[ $(field "$row" 5) != "-" ]] && extra+=(--start-image)
       n=$(field "$row" 6 | tr ',' '\n' | grep -vc '^-$' || true); extra+=(--images "$n")
       [[ $(field "$row" 7) == off ]] && extra+=(--no-audio)
-      python3 "$PREFLIGHT" "prompts/$id.txt" --model "$model" --mode "$mode" --duration "$secs" "${extra[@]}" || true
+      python3 "$PREFLIGHT" "prompts/$id.txt" --model "$model" --duration "$secs" "${extra[@]}" || true
     done
     ;;
   cost)
     echo "$CLIPS" | while IFS= read -r row; do
       [[ -z "$row" ]] && continue
-      id=$(field "$row" 1); build_flags "$row"
-      printf "%s: " "$id"; run higgsfield generate cost "$(field "$row" 2)" "${FLAGS[@]}" < "prompts/$id.txt"
+      id=$(field "$row" 1); model=$(field "$row" 2); build_flags "$row"
+      printf "%s: " "$id"
+      if uses_stdin "$model"; then run higgsfield generate cost "$model" "${FLAGS[@]}" < "prompts/$id.txt"
+      else run higgsfield generate cost "$model" "${FLAGS[@]}" --prompt "$(cat "prompts/$id.txt")" < /dev/null; fi
     done
     ;;
   canary)

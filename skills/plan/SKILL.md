@@ -37,6 +37,7 @@ Collect open questions into the plan rather than asking them one at a time, and 
 - **Faces:** a face is readable at ~8% of frame height or more, turned no more than ~45°. Plan the face tests from `film-planning.md`, then route readable faces to Seedance 2.0 (4–15 s, start frame plus master portrait) and small or turned figures to Seedance 2.5. Shots that depend on face or eye acting, or on lip-synced dialogue, need a readable face, so they follow the same route. Everything else acts with the body.
 - **Reuse:** mark reprised slices and still-plus-push moments as `post` rows. Reuse is the biggest single saving.
 - **Mixing models is normal:** grade-match in post and keep wardrobe lines and light direction identical.
+- **Cinema Studio:** if the user works in Cinema Studio, choose one engine per sequence (4.0 for Seedance 2.5's modes plus its look controls, 3.5 for named presets, 3.0 for no speed ramps, 4K or folders; see `${CLAUDE_PLUGIN_ROOT}/references/cinema-studio.md`). Record the engine and every control by name in the bible, put the engine's job type in the shot list's `model` column, and run the first tests the reference lists before planning around them. For 4.0's controls, harvest the IDs with `scripts/studio_ids.py harvest` after the user has used each option once in the web app.
 
 ## 3. Build the shot list
 
@@ -87,7 +88,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/assets.py resolve CH01:portrait
 ## 7. Gates and run scripts
 
 - **Stages:** free prep → canaries → reference library → keyframes → drafts → picture lock → finals → post, each ending at a gate the user approves (table in `film-planning.md`).
-- **Run scripts:** start each act's script from `${CLAUDE_PLUGIN_ROOT}/scripts/film_run_template.sh`. Copy it next to the act's `prompts/` and `keyframes/`, fill in its clip table, and set `SKILL_DIR` to the plugin folder (or a pinned copy of it). It lints, prices, runs a canary alone, then batches, with numbered takes, `DRY=1`, y/N confirmations and gate markers.
+- **Run scripts:** start each act's script from `${CLAUDE_PLUGIN_ROOT}/scripts/film_run_template.sh`. Copy it next to the act's `prompts/` and `keyframes/`, fill in its clip table, and set `SKILL_DIR` to the plugin folder (or a pinned copy of it). It lints, prices, runs a canary alone, then batches, with numbered takes, `DRY=1`, y/N confirmations and gate markers. It handles Seedance and the Cinema Studio video engines, and a clip's look controls can name harvested IDs (`@genre:Drama`).
 - **Resolution:** draft at 480p, keep the approved take and upscale it. Re-render natively at 720p only for hero UI plates, the end plate and shots held on screen for about 1.2 s or longer. Always `--bitrate_mode high`.
 - **Paid runs** follow the confirmation rules in `higgsfield-seedance:generate`: show the prompt, settings and cost first.
 

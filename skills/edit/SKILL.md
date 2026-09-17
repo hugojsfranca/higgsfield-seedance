@@ -37,7 +37,7 @@ This skill works on footage that already exists. `${CLAUDE_PLUGIN_ROOT}` is the 
 | The same take at a higher resolution | Upscale (§5) |
 | Several parts as one file | Join (§6) |
 
-These edit and extension modes exist on `seedance_2_5` only. A run of extensions that starts drifting is fixed by chaining from the last *good* frame instead.
+These edit and extension modes exist on `seedance_2_5` and on Cinema Studio 4.0 (`cinematic_studio_video_4_0`, same price, with its look controls; see `higgsfield-seedance:studio`). Seedance 2.0 and Cinema Studio 3.5 and 3.0 can't edit or extend. A run of extensions that starts drifting is fixed by chaining from the last *good* frame instead.
 
 ## 3. Write the prompt
 
@@ -86,7 +86,7 @@ Give the result URL and a one-line summary (operation, duration, resolution, cre
 
 ## Unverified on Higgsfield
 
-Test once at 480p (about 10 credits) when it matters, and tell the user what you found:
+Test once at 480p (about 12 credits for 4 s) when it matters, and tell the user what you found:
 - whether a `video_extension` result contains the source plus the new footage or only the new part;
 - the longest source video Higgsfield accepts (the ByteDance API allows about 30 s of reference video per job);
 - whether refused or failed jobs refund their credits.

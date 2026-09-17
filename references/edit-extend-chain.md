@@ -88,7 +88,7 @@ higgsfield generate create seedance_2_5 --mode omni_reference --start-image ./ch
 ## Resolution and cost across a chain
 
 - **Decide the final resolution before you chain.** Each clip in a chain starts from the previous clip's actual frames. A chain built on 480p drafts can't be re-rendered at 1080p piece by piece, because every re-render is a new take and the joins will no longer match. So either build the final chain at 720p or 1080p once the prompts are proven on 480p single clips, or build it at 480p/720p and upscale every clip with the same settings: `bytedance_video_upscale --preset aigc --resolution 1080p` (or `2k` / `4k`).
-- **Cost planning** (September 2026 estimates): a 30 s clip is about 75 credits at 480p, 195 at 720p and 270 at 1080p. A 90 s three-clip chain at 720p is about 585 credits plus retries. Always price the whole plan with `higgsfield generate cost` and tell the user the total before starting.
+- **Cost planning** (September 2026 estimates): a 30 s clip is about 90 credits at 480p, 195 at 720p and 270 at 1080p (17 September 2026). A 90 s three-clip chain at 720p is about 585 credits plus retries. Always price the whole plan with `higgsfield generate cost` and tell the user the total before starting.
 - **Joining clips:** once all the parts exist, concatenate them locally:
 
 ```bash

@@ -13,7 +13,8 @@ description: >-
   higgsfield-seedance:plan; to change, extend, chain or upscale an existing clip,
   higgsfield-seedance:edit. Not for talking-head videos driven by a person's photo (Seedance 2.0 or
   Marketing Studio via higgsfield-generate), native 4K, or multi-block narrated explainers
-  (higgsfield-video-explainer).
+  (higgsfield-video-explainer). For Cinema Studio engines and their look controls, use
+  higgsfield-seedance:studio.
 argument-hint: "[what the video should show]"
 compatibility: Requires the higgsfield CLI (logged in) and python3 for the preflight linter.
 ---
@@ -22,13 +23,14 @@ compatibility: Requires the higgsfield CLI (logged in) and python3 for the prefl
 
 This skill takes a brief to a finished clip: it picks the model and mode, gets the prompt written and linted, prices it, and runs it through the `higgsfield` CLI. The writing matters more than the command. A 30-second take holds 8–12 beats, and most bad results come from prompt structure rather than settings: beats that merge or vanish, invented lettering, endings that drift.
 
-Model facts here were checked against the live schemas (`higgsfield model get seedance_2_5` and `seedance_2_0`) in September 2026. If the CLI disagrees with this file, trust the CLI and re-run `model get`.
+Model facts here were checked against the live schemas (`higgsfield model get seedance_2_5` and `seedance_2_0`) in September 2026, and prices with `generate cost` on 17 September 2026. If the CLI disagrees with this file, trust the CLI and re-run `model get`.
 
 `${CLAUDE_PLUGIN_ROOT}` is the plugin's folder, two levels above this skill's folder. Shared references live in `${CLAUDE_PLUGIN_ROOT}/references/` and scripts in `${CLAUDE_PLUGIN_ROOT}/scripts/`.
 
 The other actions in this plugin:
 - `higgsfield-seedance:prompt` writes, fixes and lints prompts without spending credits. Step 4 below uses it.
 - `higgsfield-seedance:image` makes the stills: keyframes, character and location references, props, and image edits.
+- `higgsfield-seedance:studio` runs the Cinema Studio engines (4.0, 3.5, 3.0, Image 2.5) with their genre, camera, lens, light and palette controls.
 - `higgsfield-seedance:plan` plans a multi-scene film, or anything with recurring characters or objects. Switch to it before generating clip by clip.
 - `higgsfield-seedance:edit` edits, extends, chains or upscales a clip that already exists.
 
@@ -46,6 +48,7 @@ Seedance 2.5 earns its place for: one-go films longer than 15 s (Seedance 2.0 st
 - **It's an ad and no model was named.** `higgsfield-generate` routes ads to Marketing Studio by default. Stay here if the user asked for Seedance 2.5 or the ad needs a 2.5 strength (length, many references, edit, extend).
 - **It's a narrated explainer assembled from many blocks.** Use `higgsfield-video-explainer`.
 - **It's a ≤15 s shot that needs no 2.5 feature and cost matters.** Seedance 2.0 at 720p is cheaper (about 4.5 vs 6.5 credits/s).
+- **The user works in Cinema Studio, wants its looks (genre, era, camera body, lens, light, palette), needs real-time motion with no speed ramps, or wants jobs filed into a folder.** Use `higgsfield-seedance:studio`. Cinema Studio 4.0 has the same modes and price as Seedance 2.5.
 
 A film can mix models. Readable faces on 2.0 and everything else on 2.5 is a normal plan: grade-match in post and keep the wardrobe lines and light direction identical.
 
@@ -56,7 +59,7 @@ Checked against `higgsfield model get seedance_2_0` in September 2026:
 - **Length and resolution:** 4–15 s, and 480p up to 4K.
 - **Frames and references:** `--start-image` and `--end-image` are allowed in any mode, alongside up to 9 images in total (the frames count) and 12 reference files overall.
 - **Audio:** `--generate_audio` exists, and audio references need at least one image or video.
-- **Cost:** about 4.5 credits/s at 720p (check 480p with `cost`).
+- **Cost:** about 3 credits/s at 480p, 4.5 at 720p, and 3.5 in `fast` mode at 720p.
 - **Faces:** in testing, 2.0 accepted a photo of the user's own face as a reference. Still check the first clip before relying on it.
 
 The prompt skill's rules apply unchanged; Higgsfield wrote its CINEDANCE guide for this model. Lint 2.0 prompts with `preflight.py --model seedance_2_0`.
@@ -100,7 +103,7 @@ For `video_edit` and `video_extension`, switch to `higgsfield-seedance:edit`. Fi
 
 Seedance 2.5 can cut between shots inside one generation, but that doesn't always make it the right plan.
 
-- **Generate one clip per shot** (4 s minimum each) when the shots are separate places or times joined by hard cuts, when the edit will trim each shot to 2–3 s or less, when each shot has its own keyframe, or when you'll want to re-roll one shot without the others. A failed shot then costs one re-roll, not the whole scene, and the editor gets spare footage around every cut point. Example: three 1.3 s shots in a 4 s scene become three 4 s clips, 30 credits at 480p.
+- **Generate one clip per shot** (4 s minimum each) when the shots are separate places or times joined by hard cuts, when the edit will trim each shot to 2–3 s or less, when each shot has its own keyframe, or when you'll want to re-roll one shot without the others. A failed shot then costs one re-roll, not the whole scene, and the editor gets spare footage around every cut point. Example: three 1.3 s shots in a 4 s scene become three 4 s clips, 36 credits at 480p.
 - **Generate one multi-shot take** when continuity across the cuts is the point (the same subject, grade or motion carrying through), when the model's own cutting rhythm is wanted (beat-synced montages), or when the scene runs 15–30 s with segments of 2 s or more.
 - **Either way, write for the edit.** Start the action on the first frame and keep it going through the last, so the editor can choose the cut points. When clips will be trimmed, give the user a cut map: which window of each clip goes into the scene, and which match cut it serves. For example, the centred truck roof exists only in the last second of its clip. When the edit keeps under about 1.5 s of a clip, time any single event inside that window ("the tab snaps flat at about 1 s"). Otherwise a drop, hand-off or snap can land at 3.5 s, outside the slice.
 - **Camera moves shrink with the trim.** A 30° orbit across a 4 s clip shows about 6° in a 0.8 s cut. If a move has to read on screen, make it faster or the shot longer, and tell the user.
@@ -130,8 +133,9 @@ Estimated rates (September 2026; `generate cost` is authoritative):
 
 | Model | Estimate |
 |---|---|
-| Seedance 2.5 | 480p ≈ 2.5 credits/s, 720p ≈ 6.5, 1080p ≈ 9 (a 30 s take ≈ 75 / 195 / 270) |
-| Seedance 2.0 | 720p ≈ 4.5 credits/s (check other resolutions with `cost`) |
+| Seedance 2.5 | 480p ≈ 3 credits/s, 720p ≈ 6.5, 1080p ≈ 9 (a 30 s take ≈ 90 / 195 / 270) |
+| Seedance 2.0 | 480p ≈ 3 credits/s, 720p ≈ 4.5, `fast` at 720p ≈ 3.5 |
+| Cinema Studio (details in `references/cinema-studio.md`) | 4.0 as Seedance 2.5; 3.5 and 3.0 ≈ 3.5 / 5 / 10 per s at 480p / 720p / 1080p, 3.0 at 4K ≈ 24 |
 | Stills (full table in `references/image-prompts.md`) | Nano Banana Pro ≈ 2 (4 at 4k); Nano Banana 2 ≈ 1.5 (2 at 2k); GPT Image 2 ≈ 6.5 high / 2 medium; Seedream 4.5 ≈ 1; Soul 2.0, Soul Cinematic, Soul Location ≈ 0.12 per image |
 | `bytedance_video_upscale` | a fraction of a credit per clip |
 
@@ -174,7 +178,7 @@ Give the result URL and a one-line summary (mode, duration, resolution, credits)
 |---|---|
 | `mode 't2v' does not accept reference media` | Switch to `omni_reference`. |
 | `start_image and end_image are only allowed for mode 'omni_reference'` | Switch the mode. |
-| `Unknown params: genre` / `multi_shots` / `multi_prompt` / `speedramp` / `reference_elements` | These are web-app fields, not CLI params. Drop them. Named @tags from the web app (reference elements) don't exist on the CLI; references are numbered `@Image N` by attachment order. Note that `speedramp` runs on `auto` for CLI jobs and can't be switched off. If the brief rules out speed ramps, write "real-time, constant speed" into the prompt and check the result. |
+| `Unknown params: genre` / `multi_shots` / `multi_prompt` / `speedramp` / `reference_elements` | These are web-app fields, not `seedance_2_5` params. Drop them, or use a Cinema Studio engine that has them (`higgsfield-seedance:studio`: 3.5 and 3.0 take `genre` and multi-shot, 3.0 takes `speedramp`). Named @tags from the web app (reference elements) don't exist on the CLI; references are numbered `@Image N` by attachment order. Note that `speedramp` runs on `auto` for `seedance_2_5` jobs and can't be switched off there. If the brief rules out speed ramps, write "real-time, constant speed" into the prompt, or use Cinema Studio 3.0 with `--speedramp linear`. |
 | `duration: Input should be ≥ 4` / `≤ 30` | Keep it between 4 and 30 s. For longer films, chain (`higgsfield-seedance:edit`). |
 | Status `nsfw` / `ip_detected`, or a refusal on an input image | Change the input: a face in a reference, a real person, a trademark or a branded character are the usual causes. Resubmitting the same inputs won't help. |
 | Status `failed` with no content reason | Retry once unchanged. If it fails again, simplify (fewer references, shorter duration) to find the cause. |
@@ -182,7 +186,7 @@ Give the result URL and a one-line summary (mode, duration, resolution, credits)
 
 ## Unverified on Higgsfield: check before relying on it
 
-These points come from other Seedance 2.5 platforms and haven't been confirmed on Higgsfield. When one matters for a job, test it once at 480p / 4 s (about 10 credits) and tell the user what you found:
+These points come from other Seedance 2.5 platforms and haven't been confirmed on Higgsfield. When one matters for a job, test it once at 480p / 4 s (about 12 credits) and tell the user what you found:
 
 - `@Image N` numbering follows the order of the `--image-references` flags. How start and end frames are numbered alongside image references is unknown. When you mix them, refer to the frames in words ("the start frame", "the end frame") and number only the references.
 - Face-reference refusal rates on Higgsfield's Seedance 2.5.

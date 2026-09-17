@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""Lint a Seedance 2.5 prompt against the settings you plan to submit on Higgsfield.
+"""Lint a Seedance or Cinema Studio prompt against the settings you plan to submit on Higgsfield.
 
 Usage:
-  python3 preflight.py PROMPT_FILE --duration SECONDS [--model seedance_2_5|seedance_2_0] [--mode MODE]
+  python3 preflight.py PROMPT_FILE --duration SECONDS [--model MODEL] [--mode MODE]
       [--images N] [--videos N] [--audios N] [--start-image] [--end-image]
       [--extension-mode forward|backward] [--no-audio] [--fix]
   python3 preflight.py PROMPT_FILE --image [--sheet | --edit] [--fix]
 
+  --model                     seedance_2_5 (default), seedance_2_0, cinematic_studio_video_4_0 (Cinema Studio 4.0,
+                              same modes as 2.5), cinematic_studio_video_3_5 or cinematic_studio_3_0 (no modes)
   --images/--videos/--audios  how many --image-references / --video-references /
                               --audio-references you will attach (for video_edit and
                               video_extension, count the source clip in --videos)
@@ -29,6 +31,9 @@ from pathlib import Path
 
 MODES = ("t2v", "omni_reference", "video_edit", "video_extension")
 MODES_20 = ("std", "fast")
+LIKE_25 = ("seedance_2_5", "cinematic_studio_video_4_0")          # t2v / omni_reference / video_edit / video_extension
+STUDIO_3X = ("cinematic_studio_video_3_5", "cinematic_studio_3_0")  # no mode param; frames and references directly
+MODELS = ("seedance_2_5", "seedance_2_0") + LIKE_25[1:] + STUDIO_3X
 
 # Characters that sneak in from Docs/Notion/Slack pastes. Mapped to their plain replacement.
 ODD_WHITESPACE = {
@@ -186,9 +191,10 @@ def main():
     ap = argparse.ArgumentParser(description="Lint a Seedance 2.5 prompt before submitting it on Higgsfield.")
     ap.add_argument("prompt_file")
     ap.add_argument("--duration", type=float, help="clip length in seconds (required unless --image)")
-    ap.add_argument("--model", default="seedance_2_5", choices=("seedance_2_5", "seedance_2_0"))
+    ap.add_argument("--model", default="seedance_2_5", choices=MODELS)
     ap.add_argument("--mode", choices=MODES + MODES_20,
-                    help="2.5: t2v (default) | omni_reference | video_edit | video_extension; 2.0: std (default) | fast")
+                    help="2.5 and Cinema Studio 4.0: t2v (default) | omni_reference | video_edit | video_extension; "
+                         "2.0: std (default) | fast; Cinema Studio 3.5 and 3.0 take no mode")
     ap.add_argument("--images", type=int, default=0)
     ap.add_argument("--videos", type=int, default=0)
     ap.add_argument("--audios", type=int, default=0)
@@ -205,6 +211,11 @@ def main():
         ap.error("--sheet and --edit only apply with --image")
     if not a.image and a.duration is None:
         ap.error("--duration is required for video prompts (use --image for still prompts)")
+    if a.model in STUDIO_3X:
+        if a.mode is not None:
+            ap.error(f"{a.model} has no --mode; pass references and start/end frames directly")
+        media_given = a.images or a.videos or a.audios or a.start_image or a.end_image
+        a.mode = "omni_reference" if media_given else "t2v"   # internal only, for the reference checks
     if a.mode is None:
         a.mode = "std" if a.model == "seedance_2_0" else "t2v"
     if (a.model == "seedance_2_0") != (a.mode in MODES_20):
@@ -293,9 +304,14 @@ def main():
             errors.append("Seedance 2.0 allows at most 3 videos, 3 audios and 12 reference files in total")
         if a.audios and not (a.images or a.videos or a.start_image or a.end_image):
             errors.append("Seedance 2.0 audio references need at least one image, video or start/end frame")
-    if a.model == "seedance_2_5" and a.mode == "t2v" and media:
+    if a.model in STUDIO_3X:
+        if media > 15:
+            errors.append(f"{media} media items exceeds {a.model}'s limit of 15 (references plus start/end frames)")
+        if a.extension_mode:
+            errors.append(f"{a.model} can't extend a clip; use seedance_2_5 or cinematic_studio_video_4_0 with video_extension")
+    if a.model in LIKE_25 and a.mode == "t2v" and media:
         errors.append("mode t2v rejects all media; use omni_reference for references or start/end frames")
-    if a.mode == "omni_reference" and not media:
+    if a.mode == "omni_reference" and not media and a.model not in STUDIO_3X:
         errors.append("mode omni_reference needs at least one reference or a start/end frame; use t2v for text only")
     if a.mode == "video_edit" and a.videos != 1:
         errors.append("mode video_edit needs exactly one video (--videos 1)")
@@ -304,13 +320,13 @@ def main():
             errors.append("mode video_extension needs at least one source video")
         if not a.extension_mode:
             errors.append("mode video_extension needs an extension mode (here --extension-mode; on the CLI --extension_mode forward|backward)")
-    elif a.extension_mode:
+    elif a.extension_mode and a.model not in STUDIO_3X:
         errors.append("extension_mode is only allowed with mode video_extension")
-    if frames and a.model == "seedance_2_5" and a.mode != "omni_reference":
+    if frames and a.model in LIKE_25 and a.mode != "omni_reference":
         errors.append("start/end frames are only allowed in mode omni_reference")
-    if a.model == "seedance_2_5" and a.images + frames > 30:
+    if a.model in LIKE_25 and a.images + frames > 30:
         errors.append(f"{a.images + frames} images (incl. start/end frames) exceeds the limit of 30")
-    if a.model == "seedance_2_5" and media > 50:
+    if a.model in LIKE_25 and media > 50:
         errors.append(f"{media} media items exceeds the limit of 50")
 
     # --- @ references -------------------------------------------------------
@@ -481,7 +497,7 @@ def main():
     # --- report -------------------------------------------------------------
     media_desc = f"{a.model} · images={a.images} videos={a.videos} audios={a.audios}" + (
         " +start" if a.start_image else "") + (" +end" if a.end_image else "")
-    print(f"Preflight {path.name}: {n_words} words · {fmt(d)} s · {a.mode} · {media_desc}"
+    print(f"Preflight {path.name}: {n_words} words · {fmt(d)} s · {'no mode' if a.model in STUDIO_3X else a.mode} · {media_desc}"
           + (" · audio off" if a.no_audio else ""))
     for e in errors:
         print(f"ERROR  {e}")

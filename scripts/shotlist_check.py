@@ -16,10 +16,15 @@ import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
-LIMITS = {"seedance_2_5": (4, 30), "seedance_2_0": (4, 15)}
-MODES = {"seedance_2_5": {"t2v", "omni_reference", "video_edit", "video_extension"}, "seedance_2_0": {"std", "fast"}}
-# Rough September 2026 estimates; `higgsfield generate cost` is authoritative.
-DRAFT_RATE = {"seedance_2_5": 2.5, "seedance_2_0": 4.5}
+MODES_25 = {"t2v", "omni_reference", "video_edit", "video_extension"}
+LIMITS = {"seedance_2_5": (4, 30), "seedance_2_0": (4, 15), "cinematic_studio_video_4_0": (4, 30),
+          "cinematic_studio_video_3_5": (4, 30), "cinematic_studio_3_0": (4, 30)}
+MODES = {"seedance_2_5": MODES_25, "cinematic_studio_video_4_0": MODES_25, "seedance_2_0": {"std", "fast"},
+         "cinematic_studio_video_3_5": set(), "cinematic_studio_3_0": set()}   # empty set: the engine takes no mode
+LIKE_25 = ("seedance_2_5", "cinematic_studio_video_4_0")
+# Draft rates per second (2.5-like and 3.x at 480p, 2.0 at 720p) from `generate cost` on 17 September 2026.
+DRAFT_RATE = {"seedance_2_5": 3.0, "seedance_2_0": 4.5, "cinematic_studio_video_4_0": 3.0,
+              "cinematic_studio_video_3_5": 3.5, "cinematic_studio_3_0": 3.5}
 EMPTY = re.compile(r"^\s*(?:|none.*|-|n/?a)\s*$", re.I)
 WINDOW = re.compile(r"(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)")
 TIMED = re.compile(r"\bat (?:about |around )?\d+(?:\.\d+)? ?s(?:ec\w*)?\b|\d+(?:\.\d+)?\s*[-–]\s*\d+(?:\.\d+)?\s*s\b|by (?:about )?\d+(?:\.\d+)? ?s\b", re.I)
@@ -90,11 +95,12 @@ def main():
         if secs != int(secs) or not lo <= secs <= hi:
             errors.append(f"{cid}: {secs:g} s is outside {model}'s {lo}–{hi} s range (whole seconds)")
         gen_seconds[model] += secs
-        if mode and mode not in MODES[model]:
-            errors.append(f"{cid}: mode '{mode}' isn't valid for {model} ({', '.join(sorted(MODES[model]))})")
-        if model == "seedance_2_5" and mode == "t2v" and not EMPTY.match(start):
+        if mode and not EMPTY.match(mode) and mode not in MODES[model]:
+            errors.append(f"{cid}: mode '{mode}' isn't valid for {model} "
+                          f"({', '.join(sorted(MODES[model])) or 'it takes no mode; leave the column empty'})")
+        if model in LIKE_25 and mode == "t2v" and not EMPTY.match(start):
             errors.append(f"{cid}: t2v can't take a start frame ({start}); use omni_reference")
-        if model == "seedance_2_5" and mode == "omni_reference" and EMPTY.match(start) and EMPTY.match(r.get("object_refs") or ""):
+        if model in LIKE_25 and mode == "omni_reference" and EMPTY.match(start) and EMPTY.match(r.get("object_refs") or ""):
             errors.append(f"{cid}: omni_reference needs a start frame or references")
         win = WINDOW.search(r.get("cut_note") or "")
         if not win:
@@ -134,7 +140,7 @@ def main():
     est = sum(DRAFT_RATE[m] * s for m, s in gen_seconds.items())
     oks.append("rows by model: " + ", ".join(f"{m} {n}" for m, n in by_model.items()))
     oks.append("generated seconds: " + ", ".join(f"{m} {s:g}" for m, s in gen_seconds.items()))
-    oks.append(f"first-pass video estimate ≈ {est:.0f} credits (2.5 at 480p, 2.0 at 720p; before re-rolls, "
+    oks.append(f"first-pass video estimate ≈ {est:.0f} credits (2.5, 4.0 and 3.x at 480p, 2.0 at 720p; before re-rolls, "
                "stills and finals; confirm with `higgsfield generate cost`)")
 
     for e in errors:

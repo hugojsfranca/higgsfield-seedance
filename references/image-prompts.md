@@ -26,6 +26,8 @@ Prices are `generate cost` estimates from one account in September 2026; plans c
 | Nano Banana Pro (`nano_banana_pro`) | up to 14 images | all common plus 21:9, 4:5, 5:4 | `--resolution 1k`/`2k`/`4k` | 2 (4 at 4k) | First choice for edits; reference-driven keyframes and views; props with legible text |
 | Nano Banana 2 (`nano_banana_flash`) | images; inpaint with `--is_inpaint` and a mask | as Pro plus `auto` | `--resolution` (default 1k) | 1.5 (2 at 2k) | Cheap reference-driven drafts and views |
 | Seedream 4.5 (`seedream_v4_5`) | up to 14 images | 1:1, 4:3, 16:9, 3:2, 21:9, 3:4, 9:16, 2:3 | `--quality basic` or `high` | 1 | A texture pass on a finished still |
+| Cinema Studio Image 2.5 (`cinematic_studio_2_5`) | up to 14 images | all common plus 21:9, 4:5, 5:4 | `--resolution 1k`/`2k`/`4k` | 2 (4 at 4k) | Cinematic stills and keyframes for a project run in Cinema Studio; `--folder_id`, `--batch_size` |
+| Soul Cinema Studio (`soul_cinema_studio`) | 1 image, Soul ID via `--custom_reference_id`, `--style_id` | as Soul Cinematic | `--quality 1.5k` or `2k` | ~0.12 | The Soul Cinematic look with a style preset |
 | GPT Image 2 (`gpt_image_2`) | images; inpaint with a mask; `--background transparent` | all common plus `auto` | `--quality low`/`medium`/`high`, `--resolution` | 6.5 (high, 2k) / 2 (medium) / 0.5 (low, 1k) | Exact objects, structure and typography; new views of a location; a last-resort local fix |
 
 Newer models also appear in `higgsfield model list` (GPT Image 2.5, Seedream 5.0 Lite and Pro, Nano Banana 2 Lite). They haven't been tested for this workflow, so check `model get` and run one test before routing work to them.
@@ -42,6 +44,7 @@ Newer models also appear in `higgsfield model list` (GPT Image 2.5, Seedream 5.0
 | Cinematic frame, 21:9, or a Soul ID character in a place | Soul Cinematic | One reference image at most |
 | Prop or product | GPT Image 2 (exact geometry, lettering) or Nano Banana Pro | Neutral surface, stated positively |
 | Seedance keyframe built from references | Nano Banana Pro at 2k | Same price as Nano Banana 2 at 2k; use Nano Banana 2 at 1k for cheap drafts |
+| Keyframe for a film made in Cinema Studio, or a still to file into a Cinema Studio folder | Cinema Studio Image 2.5 | Same price as Nano Banana Pro; folder filing is unverified (see `cinema-studio.md`) |
 | Any edit of a finished still | Nano Banana Pro first | See [Edits](#edits) |
 | Tired, plasticky AI textures | Seedream 4.5 texture pass | Not for moving or replacing things |
 | A tiny local fix Nano Banana Pro couldn't make | GPT Image 2, ideally with a mask | Keep the change as small as possible |

@@ -40,7 +40,7 @@ scene,shot,description,film_in,film_out,film_seconds,clip_id,model,mode,clip_sec
 ```
 
 - **Timings:** `film_in` and `film_out` run continuously from 0 to the film's length. `film_seconds` is the slice used in the edit.
-- **Durations:** `clip_seconds` is what gets generated. Seedance 2.5 takes 4–30, Seedance 2.0 takes 4–15.
+- **Durations:** `clip_seconds` is what gets generated. Seedance 2.5 and the Cinema Studio video engines take 4–30, Seedance 2.0 takes 4–15. Cinema Studio 3.5 and 3.0 have no mode, so leave `mode` empty for them.
 - **Reuse:** a `model` of `post` (with `clip_seconds` 0) marks a slice reused from another clip, or a still with a push. Reuse cuts cost a lot, e.g. a later scene that reprises earlier overheads.
 - **Actions:** `primary_action` is the clip's only action (prompt rule 2).
 - **Cut notes:** `cut_note` names the slice window (`use 1.5–2.8`) and any match cut it serves. Leave no row without a window.
@@ -86,7 +86,7 @@ Write and run every still with the image skill. Models, prices, rules and templa
 
 **Count a face as readable** when it's at least ~8% of the frame height and turned no more than ~45° from the camera. Treat anything smaller, lowered, turned further, or seen from behind as "small or turned".
 
-**Test before committing**, at about 10 credits per 2.5 test:
+**Test before committing**, at about 12 credits per 4 s, 480p 2.5 test:
 
 | Test | Input | Decides |
 |---|---|---|
@@ -103,6 +103,8 @@ Write and run every still with the image skill. Models, prices, rules and templa
 Write each 2.5 face test as its own prompt variant (e.g. `S09_A_T1`) with no face reference attached. A face reference would spoil the test.
 
 **Mixing models is normal.** Grade-match 2.0 and 2.5 clips in post, and keep light direction and wardrobe lines identical across both.
+
+**Cinema Studio engines:** if the film uses Cinema Studio (4.0, 3.5 or 3.0), record the engine and every look control (genre, era, tempo, camera body, lens, aperture, light, palette) per sequence in the bible, and put the engine's job type in the shot list's `model` column. See `cinema-studio.md`.
 
 ## Screens made for compositing
 
@@ -122,8 +124,11 @@ Estimate every stage from one dated rate table, then confirm with `higgsfield ge
 
 | Model | Estimate (September 2026) |
 |---|---|
-| Seedance 2.5 | 2.5 / 6.5 / 9 credits per s at 480p / 720p / 1080p |
-| Seedance 2.0 | ~4.5 per s at 720p (check 480p and 1080p with `cost`) |
+| Seedance 2.5 | 3 / 6.5 / 9 credits per s at 480p / 720p / 1080p (480p was 2.5 until mid-September 2026) |
+| Seedance 2.0 | ~3 per s at 480p, ~4.5 at 720p, ~3.5 in `fast` mode at 720p |
+| Cinema Studio 4.0 | as Seedance 2.5 |
+| Cinema Studio 3.5 / 3.0 | ~3.5 / 5 / 10 per s at 480p / 720p / 1080p; 3.0 at 4K ~24 |
+| Cinema Studio Image 2.5 | ~2 per image (4 at 4k) |
 | Nano Banana Pro (`nano_banana_pro`) | ~2 per image at 1k or 2k, ~4 at 4k |
 | Nano Banana 2 (`nano_banana_flash`) | ~1.5 at 1k, ~2 at 2k |
 | GPT Image 2 | ~6.5 at high quality, ~2 at medium, ~0.5 at low 1k |
@@ -133,7 +138,7 @@ Estimate every stage from one dated rate table, then confirm with `higgsfield ge
 
 - **Re-roll allowances:** ×1.5 on 480p drafts, ×1.6 on keyframes, ×1.3 on sheets and objects, ×1.6 on clips made directly at final resolution.
 - **Scenarios:** give at least two against the balance, e.g. "all 2.5 at 480p plus upscale" and "hybrid, faces on 2.0". Split the recommended one into per-act envelopes.
-- **Reference point:** in the dry run, 71 clips (293 generated seconds) plus about 150 stills came to about 2,000 credits for the hybrid plan. Rendering everything natively at 720p would have been about 4,000.
+- **Reference point:** in the dry run, 71 clips (293 generated seconds) plus about 150 stills came to about 2,000 credits for the hybrid plan at the rates of 11 September 2026 (about 2,200 at the 480p rate of 17 September). Rendering everything natively at 720p would have been about 4,000.
 
 ## Resolution strategy
 

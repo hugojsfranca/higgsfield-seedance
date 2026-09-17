@@ -27,7 +27,7 @@ This skill writes a Seedance prompt that survives a long, multi-beat generation,
 
 The prompt depends on the settings it will run with. When another skill in this plugin called this one, they come from there. Otherwise ask, or default to Seedance 2.5, `t2v`, 16:9, generated audio on:
 
-- **Model:** `seedance_2_5` (4–30 s) or `seedance_2_0` (4–15 s, modes `std`/`fast`).
+- **Model:** `seedance_2_5` (4–30 s) or `seedance_2_0` (4–15 s, modes `std`/`fast`), or a Cinema Studio engine (`cinematic_studio_video_4_0` with 2.5's modes; `cinematic_studio_video_3_5` or `cinematic_studio_3_0` with no mode). With Cinema Studio, also find out which look controls are set: the prompt must not contradict them (`${CLAUDE_PLUGIN_ROOT}/references/cinema-studio.md`, *Controls and the prompt*).
 - **Mode, and what the prompt must do in it:** `t2v` describes everything. `omni_reference` describes staging and motion while the references carry the subject. `video_edit` describes the change and what stays untouched. `video_extension` describes only the new footage.
 - **Duration,** and the attachments in flag order (they set the `@Image N` / `@Video N` / `@Audio N` numbering), start or end frames, and whether audio is generated.
 - **How the clip will be used:** trimmed to a short window, cut on motion, chained from its last frame, or held under a title card.
@@ -99,7 +99,7 @@ End with a global style block stated once: grade, focus, motion blur, render qua
 On the ByteDance API, Seedance 2.5 refuses most reference images that show a readable human face, AI-generated faces included, and it never accepts photos of real people. Treat that as true on Higgsfield until tested. In practice:
 
 - Describe people in text by default (rule 11). That's enough to hold a character within one generation.
-- **Count a face as readable** when it's at least ~8% of the frame height and turned no more than ~45° from the camera. Before routing a film's face shots, test once on 2.5 with a profile frame, a three-quarter frame and a small figure seen from behind (about 10 credits each). The test table and routing rules are in `${CLAUDE_PLUGIN_ROOT}/references/film-planning.md`.
+- **Count a face as readable** when it's at least ~8% of the frame height and turned no more than ~45° from the camera. Before routing a film's face shots, test once on 2.5 with a profile frame, a three-quarter frame and a small figure seen from behind (about 12 credits each). The test table and routing rules are in `${CLAUDE_PLUGIN_ROOT}/references/film-planning.md`.
 - To keep the same character across separate generations, reuse the exact same description each time. Frame any chain frame so the face is small, turned away or covered, so the next clip rebuilds the face from text.
 - If the user needs a specific real person (themselves, a presenter), use the approved identity routes in `higgsfield-generate`: Seedance 2.0 with an image the user has rights to, Soul ID, or Marketing Studio avatars. Don't disguise a face (overlays, filters, stylization tricks) to get it past the refusal. That dodges a deliberate safeguard and puts the account at risk.
 - Seedance 2.0 caps at 15 s per clip. If speech has to run longer and is split across clips, each clip invents its own voice, and the join will be audible. Either keep the speech within one take, pass the same voice recording to every clip with `--audio-references`, or record the voiceover once and lay it in during the edit. Tell the user which one you chose.
@@ -140,6 +140,7 @@ It checks for:
 Fix every ERROR. WARNs are judgment calls: a beat-synced montage can skip timestamps on purpose.
 
 - **Seedance 2.0 shots:** add `--model seedance_2_0` (modes `std`/`fast`, 4–15 s, up to 9 images).
+- **Cinema Studio shots:** add `--model cinematic_studio_video_4_0` (2.5's modes), or `cinematic_studio_video_3_5` / `cinematic_studio_3_0` with no `--mode` (4–30 s, at most 15 media).
 - **Keyframe and asset prompts:** use `--image`. It skips the video checks and flags asset IDs, "same as" cross-references, notes in brackets, "no X" lists, gaze wording, settings written into the prose, keyword stacking, illustration triggers and prompts over about 330 words. Add `--sheet` for an intentional approval sheet and `--edit` for a CHANGE / PRESERVE EXACTLY edit.
 - **Framing claims:** `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/optics.py 70mm 120m` prints the frame width and height, to check phrases like "fills the middle third".
 

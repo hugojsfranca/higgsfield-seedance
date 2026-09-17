@@ -1,7 +1,7 @@
 {
   "name": "higgsfield-seedance",
-  "description": "Generate, prompt, plan, image and edit actions for ByteDance Seedance 2.5 and 2.0 videos on Higgsfield, with shot direction, acting direction and image-prompt routing.",
-  "version": "1.1.0",
+  "description": "Generate, prompt, plan, image, studio and edit actions for ByteDance Seedance 2.5 / 2.0 and Higgsfield Cinema Studio videos, with shot direction, acting direction, image-prompt routing and Cinema Studio look controls.",
+  "version": "1.2.0",
   "author": {
     "name": "Hugo França"
   },
@@ -16,6 +16,7 @@
     "prompting",
     "film-planning",
     "acting",
-    "image-prompts"
+    "image-prompts",
+    "cinema-studio"
   ]
 }

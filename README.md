@@ -11,6 +11,7 @@ Most bad Seedance results come from how the prompt is built, not from the settin
 | `/higgsfield-seedance:generate` | Brief → model and mode → prompt → lint → free price check → run → deliver | Yes, after showing you the cost |
 | `/higgsfield-seedance:prompt` | Write, fix, review or lint a video prompt, including the acting | Never |
 | `/higgsfield-seedance:image` | Keyframes, character and location references, props and image edits, routed to the right image model | Yes, after showing you the cost |
+| `/higgsfield-seedance:studio` | Cinema Studio 4.0, 3.5, 3.0 and Image 2.5 from the CLI: engine choice, look controls (genre, era, tempo, camera, lens, light, palette), prompt, price, run | Yes, after showing you the cost |
 | `/higgsfield-seedance:plan` | Plan a multi-scene film: shot list, asset bible, face tests, budget, gates, run scripts | No (planning only) |
 | `/higgsfield-seedance:edit` | Edit, extend, chain, join or upscale an existing clip | Yes, after showing you the cost |
 
@@ -56,12 +57,14 @@ Check it with `claude plugin details higgsfield-seedance`. Don't use both instal
 | `skills/generate/` | Routing (2.5 vs 2.0), brief, modes, one take vs one clip per shot, price, run, deliver, errors |
 | `skills/prompt/` | Shot direction, prompt shape, the 18 rules (including performance), faces, keyframe prompts, preflight |
 | `skills/image/` | Image model routing, still-prompt rules, Soul ID, edits, lint, price and run |
+| `skills/studio/` | Cinema Studio engine routing, look controls and control IDs, price and run |
 | `skills/plan/` | Film workflow: brief review, routing, shot list, asset bible, budget, gates, review |
 | `skills/edit/` | Edit, extend, chain, upscale and join |
 | `references/prompt-patterns.md` | Five prompt shapes with worked examples, and camera language |
 | `references/shot-direction.md` | Blocking, gaze, screen direction, optics, lighting, cut types, dialogue |
 | `references/acting.md` | Performance as behaviour: beats scaled to clip length, body and eye acting, dialogue and voice lines, acting profiles, failure atlas |
 | `references/image-prompts.md` | Image models on the CLI with prices, routing, rules, building blocks, templates and the edit method |
+| `references/cinema-studio.md` | Cinema Studio engines on the CLI with prices, every control and its values, defaults that bite, folders, commands and first tests |
 | `references/first-last-frame.md` | Start/end-frame transitions |
 | `references/edit-extend-chain.md` | Edit and extension prompts, chaining past 30 s |
 | `references/film-planning.md` | Pipeline and gates, shot-list format, asset bible, face tests, budget, resolution strategy |
@@ -69,7 +72,8 @@ Check it with `claude plugin details higgsfield-seedance`. Don't use both instal
 | `scripts/shotlist_check.py` | Validates a film shot list: timing, durations, modes, missing prompts, credit estimate |
 | `scripts/optics.py` | Frame size for a lens at a distance, to sanity-check scale in a prompt |
 | `scripts/assets.py` | Records approved reference images and resolves asset IDs to exactly one file |
-| `scripts/film_run_template.sh` | Staged run script for one act: lint, cost, canary, clips, upscale, gates |
+| `scripts/film_run_template.sh` | Staged run script for one act, for Seedance and Cinema Studio: lint, cost, canary, clips, upscale, gates |
+| `scripts/studio_ids.py` | Harvests Cinema Studio control IDs (camera, lens, genre, era, tempo, light, palette) from your own job history |
 | `scripts/last_frame.sh` | Extracts a clip's last frame for chaining |
 
 The scripts also run on their own:
@@ -82,7 +86,7 @@ python3 scripts/optics.py 85mm 3m
 
 ## Notes
 
-- Model facts (modes, durations, limits, rates) were checked against `higgsfield model get` in September 2026. If the CLI disagrees, trust the CLI.
+- Model facts (modes, durations, limits) were checked against `higgsfield model get` in September 2026, and prices with `higgsfield generate cost` on 17 September 2026. Prices change: always run `generate cost` before spending. If the CLI disagrees with the plugin, trust the CLI.
 - The linter's checks are heuristics: fix every ERROR and judge each WARN.
 
 ## Credits
