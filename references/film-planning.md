@@ -64,19 +64,23 @@ A table of every recurring person, object and place, each with an ID, a filename
   Each shot restates the map converted to frame terms (Sides table in `shot-direction.md`). Reverse angles swap every frame side.
 - **Hands:** set each character's dominant hand and which hand holds each prop, and convert body sides to frame sides in every prompt. The bible overrides any example in this plugin.
 - **Wardrobe lines:** word for word in every keyframe prompt, never paraphrased.
+- **Acting profile and voice line:** every character who acts or speaks gets an acting profile (about 80–130 words of observable behaviour: tics with triggers, a mask and its crack, a named gait) and one locked voice sentence. Each clip rewrites the profile for its moment, and anyone who speaks gets the voice line pasted word for word. Format and example in `acting.md`. Per-scene objectives and obstacles go in the scene notes.
 - **Look-alikes:** props that could be confused get distinct looks, e.g. a grey component case, an orange adapter case and a black equipment case.
 - **Cast and props:** drop characters and props no scene uses. Add anyone who recurs without a description, such as a security coordinator seen in six shots.
 
 ## Building the reference library
 
-- **Characters:** make the master portrait first and get it approved. Then generate the other views from it as a reference: `higgsfield generate create nano_banana_flash --image-references assets/CH01_portrait.png --aspect_ratio 16:9 ...`. Nano Banana 2 (`nano_banana_flash`) and GPT Image 2 both accept `--image-references`. A text description alone holds wardrobe but not a face.
-- **Objects:** use GPT Image 2 for exact geometry and legible structure. Use real product photos, with no people in them, whenever they exist.
-- **Environments:** Soul Location makes people-free masters cheaply, but it takes a prompt only, with no references. Add people afterwards with Nano Banana 2, using the master as a reference.
-- **Scene keyframes:** Nano Banana 2 with the character, object and environment references attached. Each prompt is written as if it were the only one (no "same as the previous image", no asset IDs in the text).
+Write and run every still with the image skill. Models, prices, rules and templates are in `image-prompts.md`.
+
+- **Characters:** make the master portrait first (Soul 2.0 or Soul Cinematic; a Soul ID only for a real person with consent) and get it approved. Then generate the other views from it as a reference, one view per image: `higgsfield generate create nano_banana_pro --resolution 2k --image-references assets/CH01_portrait.png --aspect_ratio 16:9 --prompt "..."`. A text description alone holds wardrobe but not a face. Multi-panel sheets are for approval only and never go into the manifest.
+- **Objects:** use GPT Image 2 (or Nano Banana Pro) for exact geometry and legible structure. Use real product photos, with no people in them, whenever they exist.
+- **Environments:** Soul Location makes people-free masters cheaply, but it takes a prompt only, with no references. Soul Cinematic suits 21:9 and cinematic plates. Add people afterwards with Nano Banana Pro, using the master as a reference. A reverse angle of a place goes to GPT Image 2, or to Nano Banana Pro with every object's new side written out.
+- **Scene keyframes:** Nano Banana Pro at 2k (the same price as Nano Banana 2 at 2k) with the character, object and environment references attached. Refer to each reference in words ("the woman in the portrait reference"). Each prompt is written as if it were the only one (no "same as the previous image", no asset IDs in the text).
   - When a reference fixes framing or light (a relit plate, an approved still), copy its distance, lens and light side into the text.
   - When a reference carries only appearance, say what to take ("hands and cuffs only").
   - Attach a location plate beside a start frame only when the camera reveals space beyond the still.
 - **Prefixes by asset type:** a single global "quality prefix" that says "real people at work" fights the people-free plates and object shots. Keep separate prefixes for people, objects and environments. Each is positive only: prompt rule 5 applies to image prompts too. For example, "no text, no logos, no CGI" becomes "every surface plain and unbranded; photographed on a real location".
+- **Keep prefixes to one register line** (about 15–40 words). In the dry run, a 110-word boilerplate prefix pushed the median keyframe prompt to 336 words, and details start dropping out past about 330. Spend the words on the bible lines, the framing spec and the light instead.
 
 ## Faces: threshold, tests and routing
 
@@ -120,9 +124,11 @@ Estimate every stage from one dated rate table, then confirm with `higgsfield ge
 |---|---|
 | Seedance 2.5 | 2.5 / 6.5 / 9 credits per s at 480p / 720p / 1080p |
 | Seedance 2.0 | ~4.5 per s at 720p (check 480p and 1080p with `cost`) |
-| GPT Image 2 | ~6.5 per image |
-| Nano Banana 2 (`nano_banana_flash`) | ~2 per image at default size (check 2k) |
-| Soul Location | ~0.12 per image |
+| Nano Banana Pro (`nano_banana_pro`) | ~2 per image at 1k or 2k, ~4 at 4k |
+| Nano Banana 2 (`nano_banana_flash`) | ~1.5 at 1k, ~2 at 2k |
+| GPT Image 2 | ~6.5 at high quality, ~2 at medium, ~0.5 at low 1k |
+| Seedream 4.5 | ~1 per image |
+| Soul 2.0 / Soul Cinematic / Soul Location | ~0.12 per image |
 | `bytedance_video_upscale` | a fraction of a credit per clip |
 
 - **Re-roll allowances:** ×1.5 on 480p drafts, ×1.6 on keyframes, ×1.3 on sheets and objects, ×1.6 on clips made directly at final resolution.

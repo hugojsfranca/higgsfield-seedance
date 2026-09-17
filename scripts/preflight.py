@@ -5,6 +5,7 @@ Usage:
   python3 preflight.py PROMPT_FILE --duration SECONDS [--model seedance_2_5|seedance_2_0] [--mode MODE]
       [--images N] [--videos N] [--audios N] [--start-image] [--end-image]
       [--extension-mode forward|backward] [--no-audio] [--fix]
+  python3 preflight.py PROMPT_FILE --image [--sheet | --edit] [--fix]
 
   --images/--videos/--audios  how many --image-references / --video-references /
                               --audio-references you will attach (for video_edit and
@@ -12,7 +13,10 @@ Usage:
   --no-audio                  you will pass --generate_audio false
   --fix                       rewrite PROMPT_FILE with non-standard whitespace normalized
   --image                     lint a still-image (keyframe/asset) prompt: skips video-only checks, adds
-                              checks for asset IDs, cross-references and "no X" lists
+                              checks for asset IDs, cross-references, "no X" lists, settings written into
+                              the prose, keyword stacking and illustration triggers
+  --sheet                     with --image: the still is meant to be a multi-panel approval sheet
+  --edit                      with --image: an edit prompt (CHANGE / PRESERVE EXACTLY blocks, removals allowed)
 
 Prints ERROR / WARN / OK lines and exits 1 if there is any ERROR. Standard library only.
 The checks are heuristics: fix every ERROR, judge each WARN.
@@ -117,6 +121,18 @@ SIDE_RULES = [
      re.compile(r"right\s+shoulder[^.]{0,60}\bright\s+edge", re.I),
      "camera just outside the RIGHT shoulder puts that shoulder at frame LEFT (or keep it out of frame)"),
 ]
+# Still-image checks (adapted from Higgsfield's LIRA guide)
+PARAM_IN_PROSE = re.compile(r"--ar\b|(?<![\d:.])(?:1:1|16:9|9:16|4:3|3:4|3:2|2:3|21:9|9:21|4:5|5:4)(?![\d:])|"
+                            r"\b(?:1\.5|[248])k\b|\b(?:1080|2160|4320)p\b", re.I)
+KEYWORD_STACK = re.compile(r"\b(?:masterpiece|best quality|high quality|ultra[- ]?detailed|highly detailed|8k uhd|"
+                           r"trending on artstation|award[- ]winning|hyper[- ]?detailed|ultra[- ]?realistic)\b", re.I)
+ILLUSTRATION = re.compile(r"\b(?:painterly|concept art|digital painting|illustration|illustrated|3d render|cgi)\b", re.I)
+# Video performance check (adapted from Higgsfield's ACTING guide): an emotion named instead of behaviour
+_EMOTIONS = (r"sad|angry|nervous|anxious|happy|worried|scared|afraid|frightened|upset|guilty|ashamed|confident|"
+             r"determined|emotional|excited|furious|shocked|surprised|relieved|frustrated|heartbroken|desperate")
+EMOTION_LABEL = re.compile(rf"\b(?:looks?|appears?|seems?|feels?|becomes?|grows?|is|are)\s+(?:very\s+|visibly\s+|"
+                           rf"clearly\s+|increasingly\s+|deeply\s+)?(?:{_EMOTIONS})\b|\b(?:{_EMOTIONS})\s+"
+                           rf"(?:expression|face|look)\b|\bexpression of (?:\w+ )?(?:{_EMOTIONS})\b", re.I)
 WORD = re.compile(r"[A-Za-z0-9À-ÿ]+(?:['’\-][A-Za-z0-9À-ÿ]+)*")
 
 VO_WORDS_PER_SEC = 2.5       # whole-clip budget
@@ -182,7 +198,11 @@ def main():
     ap.add_argument("--no-audio", action="store_true")
     ap.add_argument("--fix", action="store_true")
     ap.add_argument("--image", action="store_true", help="lint a still-image prompt instead of a video prompt")
+    ap.add_argument("--sheet", action="store_true", help="with --image: an intentional multi-panel approval sheet")
+    ap.add_argument("--edit", action="store_true", help="with --image: an image-edit prompt (CHANGE / PRESERVE EXACTLY)")
     a = ap.parse_args()
+    if (a.sheet or a.edit) and not a.image:
+        ap.error("--sheet and --edit only apply with --image")
     if not a.image and a.duration is None:
         ap.error("--duration is required for video prompts (use --image for still prompts)")
     if a.mode is None:
@@ -213,7 +233,8 @@ def main():
 
     if a.image:
         unq = QUOTE.sub('""', text)
-        for rx, why in ((ASSET_ID, "asset ID"), (IMG_CROSSREF, "cross-reference/sheet wording")):
+        img_checks = [(ASSET_ID, "asset ID")] + ([] if (a.sheet or a.edit) else [(IMG_CROSSREF, "cross-reference/sheet wording")])
+        for rx, why in img_checks:
             hit = rx.search(text)
             if hit:
                 warns.append(f"{why} '{hit.group(0)}' can be printed as a caption or point at nothing; write it out")
@@ -222,13 +243,33 @@ def main():
         if note:
             warns.append(f"'{note.group(0)[:60]}' reads like a production note and can end up in the image; fold it in or drop it")
         nos = NO_ITEM.findall(unq)
-        if len(nos) >= 2 or EXCLUSION_HEADER.search(unq):
+        if not a.edit and (len(nos) >= 2 or EXCLUSION_HEADER.search(unq)):
             warns.append(f"{len(nos)} 'no X' phrases; negative lists summon what they name. State what IS there (prompt rule 5)")
+        if a.edit:
+            if not re.search(r"^\s*CHANGE\s*:", text, re.M) or not re.search(r"PRESERVE EXACTLY", text):
+                warns.append("edit prompt without a CHANGE: line and a PRESERVE EXACTLY list; the model will repaint "
+                             "more than you asked (template in references/image-prompts.md)")
+            elif len(re.findall(r"^\s*CHANGE\s*:", text, re.M)) > 1:
+                warns.append("more than one CHANGE block; make one change per pass")
+            removal = re.search(r"\bremove\b[^.\n]*", text, re.I)
+            if removal and not re.search(r"\b(?:fill|replace|continu\w*|behind|in its place|where it was)\b", removal.group(0), re.I):
+                warns.append(f"'{removal.group(0)[:60]}': say what fills the gap (e.g. 'continuous brick wall behind')")
+        param = PARAM_IN_PROSE.search(unq)
+        if param:
+            warns.append(f"'{param.group(0)}' in the prompt text; aspect ratio and resolution are CLI flags, not prose")
+        stack = KEYWORD_STACK.search(unq)
+        if stack:
+            warns.append(f"'{stack.group(0)}' is keyword stacking and does nothing; name the lens, light and materials instead")
+        illo = ILLUSTRATION.search(unq)
+        if illo and not a.edit:
+            warns.append(f"'{illo.group(0)}' pulls a photoreal still toward illustration; if it should look photographed, "
+                         "use photo anchors (camera, film stock, real materials) instead")
         for hit in (BRANDS.search(unq), GAZE.search(unq), PLACEHOLDER.search(text)):
             if hit:
                 warns.append(f"'{hit.group(0)}': brand, gaze wording or placeholder; rewrite")
-        if n_words > 450:
-            warns.append(f"{n_words} words; aim for about 250 (short type prefix, then the bible and spec lines word for word)")
+        if n_words > 330:
+            warns.append(f"{n_words} words; aim for 80–150 on a simple still and at most about 330 with bible and spec lines "
+                         "(past that, details start dropping out)")
         print(f"Preflight {path.name}: {n_words} words · still image")
         for w in warns:
             print(f"WARN   {w}")
@@ -426,6 +467,10 @@ def main():
     if brand:
         warns.append(f"real brand/model name '{brand.group(0)}' can pull in real liveries or logos and trigger ip_detected; "
                      "describe the type instead")
+    emo = EMOTION_LABEL.search(QUOTE.sub('""', text))
+    if emo:
+        warns.append(f"'{emo.group(0)}' names an emotion; write the behaviour that shows it (breath, tempo, business, "
+                     "gaze target, distance), see references/acting.md")
 
     if d and n_words / d > 75:
         warns.append(f"{n_words} words for a {fmt(d)} s clip; check the extra words are control (position, lens, light) "

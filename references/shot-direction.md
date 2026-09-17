@@ -157,6 +157,8 @@ Use a controlled multi-shot only when the brief needs cuts. Then define every cu
 
 ## Dialogue
 
+For the performance around the line (what the speaker wants, the listener's reaction, voice lines), see `acting.md`.
+
 - **Only the quoted line is spoken.** Lips stay still otherwise, and there are no ad-libs, narration, subtitles or offscreen voices unless written.
 - **Speech on the first beat:** "the line begins within the first 0.3 seconds".
 - **Breathing room:** "one second of silence before and after the line".

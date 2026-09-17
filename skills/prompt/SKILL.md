@@ -1,14 +1,16 @@
 ---
 name: prompt
 description: >-
-  Write, fix, review or lint a ByteDance Seedance 2.5 or 2.0 video prompt for Higgsfield, or a
-  keyframe image prompt for one, without spending any credits. Directs the shot first (blocking,
-  body-to-frame sides, field-of-view optics, light direction), applies the craft rules that stop
-  beats merging, sides flipping, lenses drifting, invented lettering and frozen endings, and runs
-  the local preflight linter. Use when the user pastes a Seedance or Higgsfield prompt to improve,
-  asks why a generation went wrong, wants prompts drafted to run later, wants a side-by-side
-  before/after, or says not to run anything or not to use credits. The generate, plan and edit
-  skills in this plugin also use it whenever they write a prompt.
+  Write, fix, review or lint a ByteDance Seedance 2.5 or 2.0 video prompt for Higgsfield without
+  spending any credits. Directs the shot first (blocking, body-to-frame sides, field-of-view
+  optics, light direction), directs the performance (behaviour instead of emotion words, beats
+  scaled to the clip, dialogue and voice lines), applies the craft rules that stop beats merging,
+  sides flipping, lenses drifting, invented lettering and frozen endings, and runs the local
+  preflight linter. Use when the user pastes a Seedance or Higgsfield video prompt to improve, asks
+  why a generation went wrong or the acting looks fake, wants prompts drafted to run later, wants a
+  side-by-side before/after, or says not to run anything or not to use credits. The generate, plan
+  and edit skills in this plugin also use it whenever they write a video prompt. For image and
+  keyframe prompts, use higgsfield-seedance:image.
 argument-hint: "[prompt text, prompt file or shot brief]"
 compatibility: Requires python3 for the preflight linter.
 ---
@@ -17,7 +19,7 @@ compatibility: Requires python3 for the preflight linter.
 
 This skill writes a Seedance prompt that survives a long, multi-beat generation, or fixes one that didn't. It never spends credits. To price and run the result, hand over to `higgsfield-seedance:generate` (or `:edit` for an existing clip).
 
-*Rules version 2026-09-11 (4th revision). Stamp approved prompt sets with this date, so a later rule change doesn't silently invalidate them.*
+*Rules version 2026-09-17 (5th revision: adds performance direction, rule 18). Stamp approved prompt sets with this date, so a later rule change doesn't silently invalidate them.*
 
 `${CLAUDE_PLUGIN_ROOT}` is the plugin's folder, two levels above this skill's folder. Shared references live in `${CLAUDE_PLUGIN_ROOT}/references/` and scripts in `${CLAUDE_PLUGIN_ROOT}/scripts/`.
 
@@ -42,13 +44,15 @@ First/last-frame clips have their own logic in `${CLAUDE_PLUGIN_ROOT}/references
 
 Before writing, strip the brief to this one shot and ask where it will fail: an empty first frame, left and right flipped, the lens drifting, flat light, a prop in the wrong hand, a person arriving late. `${CLAUDE_PLUGIN_ROOT}/references/shot-direction.md` covers the full diagnosis and the tools for each risk. It's adapted from Higgsfield's own Seedance guide (CINEDANCE V4) and covers blocking, gaze, location maps, field-of-view optics, physics, lighting locks, cut types, dialogue and a self-check. Read it before writing any shot with people, props or a demanding camera.
 
+When people act, react or speak, also read `${CLAUDE_PLUGIN_ROOT}/references/acting.md` (adapted from Higgsfield's ACTING SYSTEM guide). It turns what each character wants into behaviour the model can render, and scales the performance to the clip's length and the size of the face in frame.
+
 ## 4. Shape
 
 For a single shot, write in this order and skip what adds nothing:
 
 ```
 scene context → active references (@Image N + anchor line) → location map → first frame and blocking
-→ format mode (single take / defined cuts) → optics → camera → action timing → physics
+→ format mode (single take / defined cuts) → optics → camera → action timing (with the performance per beat) → physics
 → lighting → audio (voiceover, sound events) → positive constraints → one style anchor, last
 ```
 
@@ -72,13 +76,21 @@ Each of these came from generations that went wrong without it.
    - If the shot cuts out on movement (a match cut on motion, a tracking camera), don't say "held", because it can freeze the move. Describe the final composition with the motion still running: "ends with the trailer roof centred on the vertical axis, the camera still gliding forward at the truck's speed."
 9. **Keep the clip self-contained.** The model only sees this generation. Lines like "transition to Scene 2", "match the next clip", "same as before", "as above" or "continues from" point at nothing, and scene numbers and script headers are just noise. Describe the actual final frame instead, since that's also what a later clip will chain from. The same goes for image prompts. Asset IDs (`OBJ01`), "same as the previous image", "reference sheet", "turnaround" and production notes in brackets can come out printed as captions or as multi-panel sheets.
 10. **Give small things room.** A micro-action (a zipper lifted two teeth, a brim tugged down) needs its own timestamp. An asymmetric detail needs its side stated in frame terms: "crest on his right chest, frame left as he faces camera". Convert body sides with the Sides table in `shot-direction.md`. Walking toward frame right shows the right side, not the left. Anyone lying down needs the whole body anchored ("in frame from head to bare feet"). Keep one mover per beat and say what stays still.
-11. **Write people in words.** Give age, hair, build, wardrobe and one distinguishing detail, and repeat the wardrobe line in each segment where the person appears. A text description holds one character for a full 30 s take. Character names are only labels to the model; the description carries the identity. When a start frame already shows the person, a short "keeps her charcoal jacket and tablet unchanged" anchor is enough. See *Faces*.
+11. **Write people in words.** Give age, hair, build, wardrobe and one distinguishing detail, and repeat the wardrobe line in each segment where the person appears. A text description holds one character for a full 30 s take. Character names are only labels to the model; the description carries the identity. When a start frame already shows the person, a short "keeps her charcoal jacket and tablet unchanged" anchor is enough. How they move and behave comes from their acting profile, rewritten for the clip (rule 18). See *Faces*.
 12. **Frame fine detail close.** Small lettering and logo textures won't read in a wide shot at any resolution. Move the camera closer for the beat where they have to read.
 13. **Clean the text.** Prompts pasted from Docs or Notion carry non-breaking spaces and glued words ("afreight", "trucktravelling"). Normalize the spaces and fix the words. The preflight script's `--fix` flag handles the spaces.
 14. **Lock the first frame and the blocking.** For any clip that will be trimmed, write "The first visible frame already contains [who] in position." Place people in measurable terms, e.g. "within 1 metre of the trailer, hand on the door", not "near the trailer". Give the body and the eyes separate directions: "back to camera, eyes on the gallery opposite".
 15. **Direct the lens by what it shows.** Give a diagonal field of view, a camera distance and the visible result, not just millimetres. Higgsfield's guide reports Seedance follows these better. Rough equivalents: 24 mm ≈ 84°, 35 mm ≈ 63°, 50 mm ≈ 47°, 85 mm ≈ 29°, 135 mm ≈ 18°. Keep portrait, environment and macro in separate beats so the lens doesn't drift.
 16. **Give the light a direction.** Name the source, where it comes from relative to the camera, and which side of the subject falls into shadow or rim. Treat it as a constraint that must hold, since flat front light is the default failure.
 17. **Screens are plates for post.** Any screen that will carry UI stays "plain dark glass with a soft even glow" in both the keyframe and the prompt, and the model never draws the interface. Keep it trackable: frame over the shoulder opposite the gesturing hand, keep all four corners in frame, keep the camera locked or slow, and allow one gesture per clip. A drag plus a tap needs 6 s or two clips. Keep finger speed unhurried so it can be rotoscoped. Deliver a tap map with the prompts: each contact point in screen terms, its clip time, and the UI it drives. A static UI moment is cheaper as a still with a push in post.
+18. **Direct performance as behaviour.** Emotion words ("looks nervous", "an angry expression") get a generic face, so write what the body does: centre of gravity, tempo, breath, the task in their hands, the distance in metres, the gaze target.
+    - **States, not transitions:** each person is already mid-action in the first frame.
+    - **Scale to the clip:** a 4–5 s clip holds one state plus at most one small timed change (the business stops, a look, one line); 6–8 s holds two beats; 10–15 s holds two or three.
+    - **Faces:** face and eye acting only when the face is readable (that's mostly Seedance 2.0 routes). Small or turned figures act with the body.
+    - **Dialogue:** one speaker per beat ("only her lips move for the line"), with the listener's reaction timed inside the speaker's segment.
+    - **Voice:** a character who speaks gets their locked voice line from the bible, pasted word for word into the audio part.
+    - **What stays out:** objectives and subtext stay in the notes, not the prompt.
+    - Details, the profile format and a worked example are in `acting.md`.
 
 End with a global style block stated once: grade, focus, motion blur, render quality. For example: `Top-tier cinematic color grading. Subject in razor-sharp focus, backgrounds with motion blur. Photorealistic materials, global illumination.` Keep the block to what's true of every shot. A global "practical light only" contradicts a sunrise segment, so per-shot light belongs in the segments.
 
@@ -94,9 +106,9 @@ On the ByteDance API, Seedance 2.5 refuses most reference images that show a rea
 
 ## 7. Keyframe and image prompts
 
-Stills that become start frames follow the same discipline:
-- **Positive phrasing applies to image prompts too (rule 5).** Keep separate prefixes for people, objects and places, so a "real people at work" line doesn't land on an empty plate.
-- **Write each keyframe prompt as if it were the only one.** The image model can't see "the previous keyframe's composition", so repeat the shared framing spec word for word in every keyframe prompt.
+Write and run stills with `higgsfield-seedance:image`. Its models, rules and templates are in `${CLAUDE_PLUGIN_ROOT}/references/image-prompts.md`. Stills that become start frames follow the same discipline as video prompts:
+- **Positive phrasing applies to image prompts too (rule 5).** Keep separate prefixes for people, objects and places, so a "real people at work" line doesn't land on an empty plate. Keep each prefix to one short register line.
+- **Write each keyframe prompt as if it were the only one.** The image model can't see "the previous keyframe's composition", so repeat the shared framing spec word for word in every keyframe prompt, including the clip's field of view, distance and height.
 - **Keep faces in keyframes small, lowered or turned.** That gives Seedance 2.5 the best chance of accepting them as start frames.
 - **Lint them with `--image`** (see below).
 
@@ -121,13 +133,14 @@ It checks for:
 - lenses given only in millimetres, with no field of view
 - fade or dissolve wording
 - camera-gaze wording and real brand names
+- emotion words in place of behaviour (rule 18)
 - an unpinned ending
 - non-breaking spaces (`--fix` rewrites the file)
 
 Fix every ERROR. WARNs are judgment calls: a beat-synced montage can skip timestamps on purpose.
 
 - **Seedance 2.0 shots:** add `--model seedance_2_0` (modes `std`/`fast`, 4–15 s, up to 9 images).
-- **Keyframe and asset prompts:** use `--image`. It skips the video checks and flags asset IDs, "same as" cross-references, notes in brackets, "no X" lists and gaze wording.
+- **Keyframe and asset prompts:** use `--image`. It skips the video checks and flags asset IDs, "same as" cross-references, notes in brackets, "no X" lists, gaze wording, settings written into the prose, keyword stacking, illustration triggers and prompts over about 330 words. Add `--sheet` for an intentional approval sheet and `--edit` for a CHANGE / PRESERVE EXACTLY edit.
 - **Framing claims:** `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/optics.py 70mm 120m` prints the frame width and height, to check phrases like "fills the middle third".
 
 ## 9. Fixing an existing prompt

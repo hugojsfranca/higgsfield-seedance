@@ -9,7 +9,8 @@ Most bad Seedance results come from how the prompt is built, not from the settin
 | Command | What it does | Spends credits? |
 |---|---|---|
 | `/higgsfield-seedance:generate` | Brief → model and mode → prompt → lint → free price check → run → deliver | Yes, after showing you the cost |
-| `/higgsfield-seedance:prompt` | Write, fix, review or lint a video or keyframe prompt | Never |
+| `/higgsfield-seedance:prompt` | Write, fix, review or lint a video prompt, including the acting | Never |
+| `/higgsfield-seedance:image` | Keyframes, character and location references, props and image edits, routed to the right image model | Yes, after showing you the cost |
 | `/higgsfield-seedance:plan` | Plan a multi-scene film: shot list, asset bible, face tests, budget, gates, run scripts | No (planning only) |
 | `/higgsfield-seedance:edit` | Edit, extend, chain, join or upscale an existing clip | Yes, after showing you the cost |
 
@@ -53,15 +54,18 @@ Check it with `claude plugin details higgsfield-seedance`. Don't use both instal
 |---|---|
 | `.claude-plugin/` | Plugin manifest, and a marketplace file so this repo installs directly |
 | `skills/generate/` | Routing (2.5 vs 2.0), brief, modes, one take vs one clip per shot, price, run, deliver, errors |
-| `skills/prompt/` | Shot direction, prompt shape, the 17 rules, faces, keyframe prompts, preflight |
+| `skills/prompt/` | Shot direction, prompt shape, the 18 rules (including performance), faces, keyframe prompts, preflight |
+| `skills/image/` | Image model routing, still-prompt rules, Soul ID, edits, lint, price and run |
 | `skills/plan/` | Film workflow: brief review, routing, shot list, asset bible, budget, gates, review |
 | `skills/edit/` | Edit, extend, chain, upscale and join |
 | `references/prompt-patterns.md` | Five prompt shapes with worked examples, and camera language |
 | `references/shot-direction.md` | Blocking, gaze, screen direction, optics, lighting, cut types, dialogue |
+| `references/acting.md` | Performance as behaviour: beats scaled to clip length, body and eye acting, dialogue and voice lines, acting profiles, failure atlas |
+| `references/image-prompts.md` | Image models on the CLI with prices, routing, rules, building blocks, templates and the edit method |
 | `references/first-last-frame.md` | Start/end-frame transitions |
 | `references/edit-extend-chain.md` | Edit and extension prompts, chaining past 30 s |
 | `references/film-planning.md` | Pipeline and gates, shot-list format, asset bible, face tests, budget, resolution strategy |
-| `scripts/preflight.py` | Lints a video or keyframe prompt against the settings you plan to submit |
+| `scripts/preflight.py` | Lints a video prompt against its settings, or a still (`--image`, `--sheet`, `--edit`) |
 | `scripts/shotlist_check.py` | Validates a film shot list: timing, durations, modes, missing prompts, credit estimate |
 | `scripts/optics.py` | Frame size for a lens at a distance, to sanity-check scale in a prompt |
 | `scripts/assets.py` | Records approved reference images and resolves asset IDs to exactly one file |
@@ -85,6 +89,8 @@ python3 scripts/optics.py 85mm 3m
 
 - Built from the Seedance 2.5 prompting skill by [InstaSD](https://www.instasd.com/post/seedance-2-5-claude-prompting-skill) (v1.1), then substantially reworked and extended for Higgsfield. Some examples in `references/prompt-patterns.md` come from that skill.
 - `references/shot-direction.md` is adapted from Higgsfield's CINEDANCE V4 prompt-director guide for Seedance.
+- `references/acting.md` is adapted from Higgsfield's ACTING SYSTEM guide for character performance in Seedance 2.0.
+- `references/image-prompts.md` and the image action are adapted from Higgsfield's LIRA image-prompt guide, with models and prices checked against the Higgsfield CLI.
 
 ## License
 

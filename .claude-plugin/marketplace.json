@@ -7,8 +7,8 @@
   "plugins": [
     {
       "name": "higgsfield-seedance",
-      "description": "Generate, prompt, plan and edit ByteDance Seedance 2.5 and 2.0 videos on Higgsfield through the higgsfield CLI.",
-      "version": "1.0.0",
+      "description": "Generate, prompt, plan, image and edit actions for ByteDance Seedance 2.5 and 2.0 videos on Higgsfield, with shot direction, acting direction and image-prompt routing.",
+      "version": "1.1.0",
       "source": "./",
       "author": {
         "name": "Hugo França"

@@ -8,7 +8,8 @@ description: >-
   video; start/end-frame transformations. Use whenever the user wants to generate, render or run a
   Seedance or Higgsfield video, a single Higgsfield video longer than 15 seconds, a match-cut brand
   film, timestamped tutorial or continuous-shot chapter film, even without naming the model. For a
-  prompt only (no credits) use higgsfield-seedance:prompt; for a multi-scene film,
+  prompt only (no credits) use higgsfield-seedance:prompt; for keyframes and reference stills,
+  higgsfield-seedance:image; for a multi-scene film,
   higgsfield-seedance:plan; to change, extend, chain or upscale an existing clip,
   higgsfield-seedance:edit. Not for talking-head videos driven by a person's photo (Seedance 2.0 or
   Marketing Studio via higgsfield-generate), native 4K, or multi-block narrated explainers
@@ -27,6 +28,7 @@ Model facts here were checked against the live schemas (`higgsfield model get se
 
 The other actions in this plugin:
 - `higgsfield-seedance:prompt` writes, fixes and lints prompts without spending credits. Step 4 below uses it.
+- `higgsfield-seedance:image` makes the stills: keyframes, character and location references, props, and image edits.
 - `higgsfield-seedance:plan` plans a multi-scene film, or anything with recurring characters or objects. Switch to it before generating clip by clip.
 - `higgsfield-seedance:edit` edits, extends, chains or upscales a clip that already exists.
 
@@ -63,6 +65,7 @@ For face shots on 2.0:
 - **Anchor line:** attach the master portrait of every readable face in frame as `--image-references`, each with an anchor line built from the bible: "@Image 1: <bible line>. 100% matches the reference for face, hair and build." Never write "matching @Image 1" inside @Image 1's own line; that's circular.
 - **Route by the keyframe,** not by the storyboard's label. A "face" shot whose blocking turns the face away belongs on 2.5.
 - **Test numbering:** `@Image` numbering beside a start frame is unverified on 2.0 too, so let the first 2.0 clip double as that test.
+- **Acting:** a readable face can carry face and eye acting, so these are the shots where the performance rules matter most (prompt rule 18 and `${CLAUDE_PLUGIN_ROOT}/references/acting.md`).
 
 ## 2. Pin the brief
 
@@ -70,8 +73,12 @@ Before writing, know: purpose and format, duration (4–30 s, integer), aspect r
 
 Default what you can (16:9, generated audio on, 480p draft) and ask only for what you can't sensibly default, one question at a time. Voiceover and on-screen text are the user's words. If they didn't supply them, draft them and show them before spending credits.
 
-**Keyframes first, when composition matters.** If the brief includes static keyframe prompts, or depends on exact compositions (match-cut geometry, space reserved for titles), ask whether keyframe images exist. If they don't, suggest making them first with an image model via `higgsfield-generate`. Get the stills approved, then animate each one with `--start-image`. A still locks composition far more reliably than text, and it's the cheapest place to iterate. Write the keyframe prompts with the prompt skill (its *Keyframe and image prompts* section).
-- **Which image model:** GPT Image 2 (about 6.5 credits) for exact objects and structure. Nano Banana 2 (`nano_banana_flash`, about 2) when references must carry over, because it takes `--image-references`. Soul Location (about 0.12) for people-free places; it takes a prompt only.
+**Keyframes first, when composition matters.** If the brief includes static keyframe prompts, or depends on exact compositions (match-cut geometry, space reserved for titles), ask whether keyframe images exist. If they don't, suggest making them first with `higgsfield-seedance:image`. Get the stills approved, then animate each one with `--start-image`. A still locks composition far more reliably than text, and it's the cheapest place to iterate.
+- **Which image model** (details and routing in `${CLAUDE_PLUGIN_ROOT}/references/image-prompts.md`):
+  - Nano Banana Pro (`nano_banana_pro`, about 2 credits at 2k) for keyframes and views built from references.
+  - GPT Image 2 (about 6.5 at high quality) for exact objects, structure and lettering.
+  - Soul 2.0 or Soul Cinematic (about 0.12) for character portraits and cinematic frames.
+  - Soul Location (about 0.12) for people-free places; it takes a prompt only.
 - **Recurring characters:** approve a master portrait first, then build every other view and every keyframe with that portrait attached as `--image-references`. A text description holds wardrobe, but not a face.
 
 ## 3. Pick the mode
@@ -125,7 +132,7 @@ Estimated rates (September 2026; `generate cost` is authoritative):
 |---|---|
 | Seedance 2.5 | 480p ≈ 2.5 credits/s, 720p ≈ 6.5, 1080p ≈ 9 (a 30 s take ≈ 75 / 195 / 270) |
 | Seedance 2.0 | 720p ≈ 4.5 credits/s (check other resolutions with `cost`) |
-| GPT Image 2 / Nano Banana 2 (`nano_banana_flash`) / Soul Location | ≈ 6.5 / 2 / 0.12 per image at default size |
+| Stills (full table in `references/image-prompts.md`) | Nano Banana Pro ≈ 2 (4 at 4k); Nano Banana 2 ≈ 1.5 (2 at 2k); GPT Image 2 ≈ 6.5 high / 2 medium; Seedream 4.5 ≈ 1; Soul 2.0, Soul Cinematic, Soul Location ≈ 0.12 per image |
 | `bytedance_video_upscale` | a fraction of a credit per clip |
 
 Generated audio and bitrate mode don't change the price. Extensions are billed on the new footage's duration, and edits appear to be billed on the source clip's length.
