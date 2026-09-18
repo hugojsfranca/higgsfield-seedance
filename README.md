@@ -12,7 +12,7 @@ Most bad Seedance results come from how the prompt is built, not from the settin
 | `/higgsfield-seedance:prompt` | Write, fix, review or lint a video prompt, including the acting | Never |
 | `/higgsfield-seedance:image` | Keyframes, character and location references, props and image edits, routed to the right image model | Yes, after showing you the cost |
 | `/higgsfield-seedance:studio` | Cinema Studio 4.0, 3.5, 3.0 and Image 2.5 from the CLI: engine choice, look controls (genre, era, tempo, camera, lens, light, palette), prompt, price, run | Yes, after showing you the cost |
-| `/higgsfield-seedance:plan` | Plan a multi-scene film: shot list, asset bible, face tests, budget, gates, run scripts | No (planning only) |
+| `/higgsfield-seedance:plan` | Plan a multi-scene film: shot list, asset bible, a storyboard page to review and annotate, face tests, budget, gates, run scripts | No (planning only) |
 | `/higgsfield-seedance:edit` | Edit, extend, chain, join or upscale an existing clip | Yes, after showing you the cost |
 
 You can type a command with a description after it (`/higgsfield-seedance:generate a 12 s aerial of a cargo ship at dawn`), or just describe what you want and Claude picks the right action.
@@ -75,6 +75,8 @@ Check it with `claude plugin details higgsfield-seedance`. Don't use both instal
 | `scripts/film_run_template.sh` | Staged run script for one act, for Seedance and Cinema Studio: lint, cost, canary, clips, upscale, gates |
 | `scripts/studio_ids.py` | Harvests Cinema Studio control IDs (camera, lens, genre, era, tempo, light, palette) from your own job history |
 | `scripts/last_frame.sh` | Extracts a clip's last frame for chaining |
+| `scripts/storyboard.py` | Builds `storyboard.html` for a film project from its shot list: scenes, timings, voice-over, on-screen copy and frames, with a decision and a note per shot, kept in the browser and exported for Claude. Every planned film gets one |
+| `scripts/screens/` | `corners.html`, `composite.py` and `place-screens.sh`: place real interface screenshots on the blank screens of the plates by clicking four corners, then composite them for the storyboard |
 
 The scripts also run on their own:
 
@@ -82,6 +84,7 @@ The scripts also run on their own:
 python3 scripts/preflight.py prompt.txt --duration 12 --mode omni_reference --start-image
 python3 scripts/shotlist_check.py shotlist.csv --prompts prompts --keyframes keyframes
 python3 scripts/optics.py 85mm 3m
+python3 scripts/storyboard.py --project my-film --open
 ```
 
 ## Notes

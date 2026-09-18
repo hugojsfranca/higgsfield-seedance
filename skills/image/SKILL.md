@@ -65,6 +65,10 @@ Follow the 14 rules in `image-prompts.md`. The ones that matter most:
 - **Keyframes stand alone.** Write each one as the only prompt: no asset IDs, no "same as", and the shared spec copied word for word.
 - **People in keyframes** are mid-action: states, not transitions. Their posture, tempo and business follow their acting profile (`${CLAUDE_PLUGIN_ROOT}/references/acting.md`) when the bible has one.
 
+- **People and their clothes.** Plain unbranded clothing, gender and build before wardrobe, a second garment of a different category when one carries a strong colour, and one reference view per person per keyframe. The full list, each item bought with re-rolls, is *Casting and references: field rules* in `image-prompts.md`.
+- **Cast first.** One image per person, the whole cast side by side, approved by the user before any further view of anyone. Soul Cast always at `--budget 200`.
+- **Storyboards use the draft tier** (`nano_banana_flash` at 1k, 1.5 credits), takes named `candidates/<KEYFRAME>_<tier>_t<N>.png`. Rebuild the project's `storyboard.html` after each batch (`python3 ${CLAUDE_PLUGIN_ROOT}/scripts/storyboard.py --project <film folder>`) and tell the user where it is.
+
 **Fixing a user's prompt:** lint it as it stands, name the rule behind each change, keep their subject and exact text, and show a short before/after when they ask for a comparison.
 
 ## 4. Edits
@@ -101,6 +105,7 @@ higgsfield generate create nano_banana_pro --resolution 2k --aspect_ratio 16:9 -
 
 ## 6. Deliver
 
+- **A job that fails with no reason:** retry once, then shorten the prompt, then drop references one at a time. Save the version that worked as the prompt file.
 - **Result:** give the URL and a one-line summary (model, size, credits). For a set, give a contact sheet or a list the user can approve.
 - **Film work:** after approval, record each pick in the manifest (`python3 ${CLAUDE_PLUGIN_ROOT}/scripts/assets.py record ID view file`), so run scripts resolve exactly one file.
 - **Next step:** animate an approved keyframe with `higgsfield-seedance:generate`, or plan the rest of the library with `higgsfield-seedance:plan`.

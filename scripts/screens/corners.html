@@ -1,0 +1,339 @@
+<!doctype html><meta charset="utf-8"><title>Place the screens</title>
+<style>
+ :root{color-scheme:dark;--bg:#15171b;--pan:#1c1f24;--fg:#e9ebee;--mut:#8d939c;--line:#2c3138;--acc:#6aa9ff;--ok:#7bd88f;--amb:#d7b05c}
+ *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 -apple-system,system-ui,sans-serif}
+ body.locked{overflow:hidden}
+ header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);
+   padding:12px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+ h1{font-size:16px;margin:0;font-weight:600} .sub{color:var(--mut);font-size:12px} .grow{flex:1}
+ a.nav{color:var(--acc);text-decoration:none;font-size:13px} a.nav:hover{text-decoration:underline}
+ button{background:#252a31;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 11px;cursor:pointer;font:inherit}
+ button:hover{border-color:var(--acc)} button:focus-visible,.card:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+ button.p{background:var(--acc);color:#04111f;border-color:var(--acc);font-weight:600}
+ button.on{border-color:var(--acc);color:var(--acc)}
+ #warn{display:none;padding:10px 18px;background:#4a3a12;color:#ffd98a;font-size:13px;border-bottom:1px solid #6b5520}
+ #warn:not([hidden]){display:block} #warn code{background:#0003;padding:1px 5px;border-radius:4px}
+ .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;padding:18px}
+ .card{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--pan)}
+ .card.needs{border-color:#8a6d2f} .card.part{border-color:var(--amb)} .card.done{border-color:var(--ok)}
+ .card.reuse{opacity:.55} .card.click{cursor:pointer}
+ .stage{position:relative;aspect-ratio:16/9;background:#000;overflow:hidden}
+ .stage img.frame{width:100%;height:100%;object-fit:cover;display:block}
+ img.ui{position:absolute;top:0;left:0;transform-origin:0 0;pointer-events:none;opacity:0;max-width:none}
+ .stage .empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--mut);font-size:12px}
+ .meta{padding:8px 10px} .meta b{font-size:13px} .meta p{margin:3px 0 0;color:var(--mut);font-size:12px}
+ .tag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:99px;border:1px solid var(--line);color:var(--mut);margin-left:5px}
+ .tag.s{border-color:#8a6d2f;color:var(--amb)} .tag.d{border-color:var(--ok);color:var(--ok)}
+ .overlay{position:fixed;inset:0;background:#0b0d10f4;z-index:20;display:none;padding:14px 18px;overflow:auto}
+ .overlay.on{display:block}
+ .ov-head{display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+ .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+ .seg button{border:0;border-radius:0;border-right:1px solid var(--line)} .seg button:last-child{border-right:0}
+ .seg button.on{background:#2a3648;color:#fff}
+ .pickwrap{position:relative;display:inline-block;max-width:100%;line-height:0;user-select:none;touch-action:none}
+ .pickwrap img.frame{display:block;max-width:100%;max-height:calc(100vh - 120px)}
+ svg.pick{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;overflow:visible}
+ svg .h{fill:var(--acc);stroke:#000;stroke-width:1.5;cursor:grab} svg .h.act{fill:#fff;stroke:var(--acc);stroke-width:2.5}
+ svg .q{fill:none;stroke:var(--acc);stroke-width:1.5;stroke-dasharray:5 4} svg .q.other{stroke:#9aa3ad;opacity:.55}
+ #loupe{position:fixed;width:160px;height:160px;border-radius:50%;border:2px solid var(--acc);pointer-events:none;
+   z-index:30;display:none;box-shadow:0 4px 18px #000a;background:#000}
+ kbd{background:#252a31;border:1px solid var(--line);border-radius:4px;padding:1px 5px;font:12px ui-monospace,monospace}
+ .help{color:var(--mut);font-size:12px;margin-top:8px;line-height:1.7}
+</style>
+<header>
+ <h1>Place the screens</h1>
+ <a class="nav" href="../storyboard.html">← storyboard</a>
+ <span class="sub" id="stat"></span>
+ <span class="grow"></span>
+ <button id="only">Only shots with screens</button>
+ <button id="next">Next unplaced</button>
+ <button id="load">Import screens.json</button>
+ <button class="p" id="save">Download screens.json</button>
+ <input type="file" id="file" accept="application/json,.json" hidden>
+</header>
+<div id="warn" hidden>This page cannot remember placements where it is open now — open it in a browser
+ (or with <code>./place-screens.sh</code>), or use Import and Download to carry your work.</div>
+<div class="grid" id="grid"></div>
+
+<div class="overlay" id="ov" role="dialog" aria-modal="true">
+ <div class="ov-head">
+  <b id="ovTitle"></b>
+  <span class="seg" id="ovSlots"></span>
+  <span class="seg" id="ovStates"></span>
+  <span class="grow"></span>
+  <span class="sub" id="ovStat"></span>
+  <button id="ovClear">Clear this screen</button>
+  <button id="ovNext">Next unplaced <kbd>n</kbd></button>
+  <button class="p" id="ovDone">Done <kbd>esc</kbd></button>
+ </div>
+ <div class="pickwrap" id="pw">
+  <img class="frame" id="ovFrame" alt="" draggable="false">
+  <span id="ovUis"></span>
+  <svg class="pick" id="pick"></svg>
+ </div>
+ <p class="help">Click the four corners of the <b>glass</b> (not the bezel), in any order. Drag a corner to adjust it ·
+  <kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd> nudge the highlighted corner by one pixel (<kbd>shift</kbd> = 5) ·
+  <kbd>u</kbd> remove the last corner. It saves as soon as the fourth corner lands.</p>
+</div>
+<canvas id="loupe" width="320" height="320"></canvas>
+
+<!--DATA-->
+<script>window.FILM = {}; window.SHOTS = [];</script>
+<!--/DATA-->
+<script>
+'use strict';
+const SHOTS = window.SHOTS || [];
+const KEY = (window.FILM && window.FILM.key) || 'screens-corners';
+if (window.FILM && window.FILM.title) document.title = 'Place the screens — ' + window.FILM.title;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// ---- storage -----------------------------------------------------------------------------------
+// saved[plate] = {placements: [{screen, corners:[[x,y]×4]}]} — one plate can carry several screens.
+function normalise(entry){
+  if(!entry || typeof entry !== 'object') return [];
+  let items = entry.placements;
+  if(!items && entry.corners) items = [{screen: entry.screen, corners: entry.corners}];   // the old single-screen form
+  return (items||[]).filter(p => p && p.screen && Array.isArray(p.corners) && p.corners.length===4 &&
+    p.corners.every(c => Array.isArray(c) && c.length===2 && c.every(Number.isFinite)))
+    .map(p => ({screen: p.screen, corners: p.corners.map(c => [c[0], c[1]])}));
+}
+let saved = {}, canRemember = true;
+try {
+  localStorage.setItem(KEY+'-probe','1'); localStorage.removeItem(KEY+'-probe');
+  const raw = JSON.parse(localStorage.getItem(KEY) || '{}');
+  Object.keys(raw).forEach(k => { const n = normalise(raw[k]); if(n.length) saved[k] = {placements:n}; });
+} catch(e){ canRemember = false; }
+SHOTS.forEach(s => { if(!saved[s.plate] && s.placements && s.placements.length) saved[s.plate] = {placements: normalise({placements:s.placements})}; });
+function persist(){ try{ localStorage.setItem(KEY, JSON.stringify(saved)); }catch(e){} }
+
+const slotOf = (shot, screen) => shot.screens.find(sl => sl.states.includes(screen));
+function placementFor(plate, slot){ return ((saved[plate]||{}).placements||[]).find(p => slot.states.includes(p.screen)); }
+function setPlacement(plate, slot, screen, corners){
+  const rec = saved[plate] || (saved[plate] = {placements:[]});
+  rec.placements = rec.placements.filter(p => !slot.states.includes(p.screen));
+  if(corners) rec.placements.push({screen, corners});
+  if(!rec.placements.length) delete saved[plate];
+  persist();
+}
+const primary = SHOTS.filter(s => !s.reuse && s.screens.length);
+const countPlaced = s => s.screens.filter(sl => placementFor(s.plate, sl)).length;
+
+// ---- geometry ----------------------------------------------------------------------------------
+// Four points into TL, TR, BR, BL order, whatever order they were clicked in.
+function order4(p){
+  if(p.length!==4) return p;
+  const cx=p.reduce((a,q)=>a+q[0],0)/4, cy=p.reduce((a,q)=>a+q[1],0)/4;
+  const ring=[...p].sort((a,b)=>Math.atan2(a[1]-cy,a[0]-cx)-Math.atan2(b[1]-cy,b[0]-cx));
+  let k=0, best=Infinity; ring.forEach((q,i)=>{ const d=q[0]+q[1]; if(d<best){best=d;k=i;} });
+  return [0,1,2,3].map(i => ring[(k+i)%4]);
+}
+// 4-point transform as a CSS matrix3d (column-major)
+function solve(w,h,d){
+  const src=[[0,0],[w,0],[w,h],[0,h]], A=[], b=[];
+  for(let i=0;i<4;i++){ const [sx,sy]=src[i],[dx,dy]=d[i];
+    A.push([sx,sy,1,0,0,0,-sx*dx,-sy*dx]); b.push(dx);
+    A.push([0,0,0,sx,sy,1,-sx*dy,-sy*dy]); b.push(dy); }
+  for(let i=0;i<8;i++){ let p=i; for(let r=i+1;r<8;r++) if(Math.abs(A[r][i])>Math.abs(A[p][i])) p=r;
+    if(Math.abs(A[p][i])<1e-9) return null;
+    [A[i],A[p]]=[A[p],A[i]]; [b[i],b[p]]=[b[p],b[i]];
+    for(let r=0;r<8;r++){ if(r===i) continue; const f=A[r][i]/A[i][i];
+      for(let c=i;c<8;c++) A[r][c]-=f*A[i][c]; b[r]-=f*b[i]; } }
+  const k=A.map((row,i)=>b[i]/row[i]);
+  return [k[0],k[3],0,k[6],k[1],k[4],0,k[7],0,0,1,0,k[2],k[5],0,1];
+}
+function warp(img, pts){            // pts already in the container's display pixels
+  const go = () => { const m = solve(img.naturalWidth, img.naturalHeight, order4(pts));
+    if(m){ img.style.transform=`matrix3d(${m.join(',')})`; img.style.opacity=.97; } else img.style.opacity=0; };
+  if(img.naturalWidth) go(); else img.addEventListener('load', go, {once:true});
+}
+
+// ---- the grid ----------------------------------------------------------------------------------
+let onlyScreens = false;
+const stages = [];                   // {el, shot} so a resize re-fits the previews without a rebuild
+function fitStage(el, shot){
+  // corners are in frame pixels; the grid shows a thumbnail with object-fit: cover
+  const W=el.clientWidth, H=el.clientHeight; if(!W || !shot.fw) return;
+  const sc=Math.max(W/shot.fw, H/shot.fh), ox=(W-shot.fw*sc)/2, oy=(H-shot.fh*sc)/2;
+  el.querySelectorAll('img.ui').forEach(img => {
+    const pl=((saved[shot.plate]||{}).placements||[]).find(p => p.screen===img.dataset.screen);
+    if(pl) warp(img, pl.corners.map(([x,y])=>[x*sc+ox, y*sc+oy]));
+  });
+}
+function build(){
+  const g=$('grid'); g.innerHTML=''; stages.length=0;
+  SHOTS.forEach(s => {
+    const n=s.screens.length, done=n?countPlaced(s):0;
+    if(onlyScreens && !n) return;
+    const c=document.createElement('div');
+    const state = !n ? '' : done===n ? ' done' : done ? ' part' : ' needs';
+    const can = n && s.frame && !s.reuse;
+    c.className='card'+state+(s.reuse?' reuse':'')+(can?' click':'');
+    const uis = ((saved[s.plate]||{}).placements||[]).map(p =>
+      `<img class="ui" data-screen="${esc(p.screen)}" src="thumbs/ui_${esc(p.screen)}.jpg" alt="">`).join('');
+    c.innerHTML = `<div class="stage">
+        ${s.frame?`<img class="frame" loading="lazy" src="${esc(s.thumb||s.frame)}" alt="">`:'<div class="empty">not generated</div>'}${uis}
+      </div>
+      <div class="meta"><b>${esc(s.shot)}</b> <span class="sub">${esc(s.seconds[0])}–${esc(s.seconds[1])} s</span>
+        ${n?`<span class="tag ${done===n?'d':'s'}">${done} of ${n} screen${n>1?'s':''} placed</span>`:''}
+        ${s.reuse?'<span class="tag">reused slice</span>':''}
+        <p>${esc(s.desc)}</p>
+        <p class="sub">${esc(s.plate)}${n?' · '+s.screens.map(x=>esc(x.states.join(' → '))).join(' + '):''}</p></div>`;
+    if(can){ c.tabIndex=0; c.onclick=()=>openShot(s);
+      c.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openShot(s); } }; }
+    g.appendChild(c);
+    const st=c.querySelector('.stage'); stages.push({el:st, shot:s});
+    const f=st.querySelector('img.frame'); if(f && !f.complete) f.addEventListener('load',()=>fitStage(st,s),{once:true});
+    fitStage(st,s);
+  });
+  const need=primary.reduce((a,s)=>a+s.screens.length,0), done=primary.reduce((a,s)=>a+countPlaced(s),0);
+  $('stat').textContent = `${SHOTS.length} shots · ${done} of ${need} screens placed`;
+}
+
+// ---- the picker --------------------------------------------------------------------------------
+let cur=null, slot=null, state=null, pts=[], act=-1, drag=false;
+const frameEl=$('ovFrame'), svg=$('pick'), loupe=$('loupe'), lctx=loupe.getContext('2d');
+const scaleNow = () => frameEl.clientWidth / (cur.fw || frameEl.naturalWidth || 1);
+
+function openShot(s, wantSlot){
+  cur=s; $('ov').classList.add('on'); document.body.classList.add('locked');
+  $('ovTitle').textContent=`${s.shot} · ${s.plate}`;
+  try{ history.replaceState(null,'','#'+s.plate); }catch(e){}
+  frameEl.onload=()=>drawAll(); frameEl.src=s.frame;
+  pickSlot(wantSlot || s.screens.find(sl=>!placementFor(s.plate,sl)) || s.screens[0]);
+}
+function closeShot(){
+  $('ov').classList.remove('on'); document.body.classList.remove('locked'); loupe.style.display='none';
+  cur=null; slot=null; pts=[]; act=-1;
+  try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
+  build();
+}
+function pickSlot(sl){
+  slot=sl; const pl=placementFor(cur.plate, sl);
+  pts = pl ? pl.corners.map(c=>[c[0],c[1]]) : []; act=-1;
+  state = pl ? pl.screen : (sl.rendered[0] || sl.states[0]);
+  const many=cur.screens.length>1;
+  $('ovSlots').innerHTML = many ? cur.screens.map((x,i)=>
+    `<button data-i="${i}" class="${x===sl?'on':''}">${placementFor(cur.plate,x)?'✓ ':''}${esc(x.name)}</button>`).join('') : '';
+  $('ovSlots').style.display = many?'':'none';
+  $('ovSlots').querySelectorAll('button').forEach(b=>b.onclick=()=>pickSlot(cur.screens[+b.dataset.i]));
+  const multi=sl.states.length>1;
+  $('ovStates').innerHTML = multi ? sl.states.map(x=>
+    `<button data-s="${esc(x)}" class="${x===state?'on':''}" ${sl.rendered.includes(x)?'':'disabled title="not rendered yet"'}>${esc(x)}</button>`).join('') : '';
+  $('ovStates').style.display = multi?'':'none';
+  $('ovStates').querySelectorAll('button').forEach(b=>b.onclick=()=>{ state=b.dataset.s;
+    if(pts.length===4) setPlacement(cur.plate, slot, state, pts.map(p=>[p[0],p[1]])); pickSlot(slot); });
+  drawAll();
+}
+function drawAll(){
+  if(!cur) return;
+  if(!frameEl.naturalWidth){ return; }               // frameEl.onload calls back in
+  const sc=scaleNow(), P=p=>[p[0]*sc,p[1]*sc];
+  // previews: every placed screen on this plate, plus the one being edited
+  const items=[]; cur.screens.forEach(sl=>{
+    if(sl===slot){ if(pts.length===4) items.push({screen:state, corners:pts}); }
+    else { const pl=placementFor(cur.plate,sl); if(pl) items.push(pl); } });
+  const box=$('ovUis'); const have={};
+  box.querySelectorAll('img').forEach(i=>have[i.dataset.screen]=i);
+  Object.keys(have).forEach(k=>{ if(!items.some(it=>it.screen===k)){ have[k].remove(); delete have[k]; } });
+  items.forEach(it=>{ let img=have[it.screen];
+    if(!img){ img=document.createElement('img'); img.className='ui'; img.dataset.screen=it.screen; img.alt='';
+      img.draggable=false; img.src=`out/${it.screen}.png`; box.appendChild(img); }
+    warp(img, it.corners.map(P)); });
+  // handles and outlines
+  let h='';
+  cur.screens.forEach(sl=>{ if(sl!==slot){ const pl=placementFor(cur.plate,sl);
+    if(pl) h+=`<polygon class="q other" points="${order4(pl.corners).map(P).map(p=>p.join(',')).join(' ')}"/>`; } });
+  const ring = pts.length===4 ? order4(pts) : pts;
+  h+=`<polygon class="q" points="${ring.map(P).map(p=>p.join(',')).join(' ')}"/>`;
+  pts.forEach((p,i)=>{ const [x,y]=P(p); h+=`<circle class="h${i===act?' act':''}" cx="${x}" cy="${y}" r="${i===act?7:6}"/>`; });
+  svg.innerHTML=h;
+  $('ovStat').textContent = `${slot.name}: ${pts.length}/4 corners` + (pts.length===4?' · saved':'');
+}
+function commit(){                   // order the ring, keep the active corner active, save
+  if(pts.length!==4) return;
+  const a = act>=0 ? pts[act] : null;
+  pts = order4(pts); act = a ? pts.indexOf(a) : -1;
+  setPlacement(cur.plate, slot, state, pts.map(p=>[Math.round(p[0]*10)/10, Math.round(p[1]*10)/10]));
+}
+function at(e){ const r=frameEl.getBoundingClientRect(), sc=scaleNow();
+  return [Math.min(cur.fw, Math.max(0,(e.clientX-r.left)/sc)), Math.min(cur.fh, Math.max(0,(e.clientY-r.top)/sc))]; }
+function nearest(p, within){ const sc=scaleNow(); let k=-1, best=within/sc;
+  pts.forEach((q,i)=>{ const d=Math.hypot(q[0]-p[0],q[1]-p[1]); if(d<best){best=d;k=i;} }); return k; }
+
+svg.addEventListener('pointerdown', e=>{
+  if(!cur || e.button!==0) return; e.preventDefault();
+  const p=at(e); let k=nearest(p,16);
+  if(k<0 && pts.length<4){ pts.push(p); k=pts.length-1; }      // a fifth click never wipes the other four
+  if(k<0) return;
+  act=k; drag=true; svg.setPointerCapture(e.pointerId); drawAll(); showLoupe(e);
+});
+svg.addEventListener('pointermove', e=>{ if(!cur) return;
+  if(drag && act>=0){ pts[act]=at(e); drawAll(); } showLoupe(e); });
+const endDrag=e=>{ if(!drag) return; drag=false; try{svg.releasePointerCapture(e.pointerId);}catch(_){}
+  if(pts.length===4) commit(); drawAll(); };
+svg.addEventListener('pointerup', endDrag); svg.addEventListener('pointercancel', endDrag);
+svg.addEventListener('pointerleave', ()=>{ if(!drag) loupe.style.display='none'; });
+
+function showLoupe(e){               // a 4x magnifier, because a corner is a two-pixel decision
+  if(!frameEl.naturalWidth) return;
+  const [x,y]=at(e), z=4, S=320, src=S/z*(frameEl.naturalWidth/(cur.fw||frameEl.naturalWidth));
+  lctx.imageSmoothingEnabled=false; lctx.fillStyle='#000'; lctx.fillRect(0,0,S,S);
+  const k=frameEl.naturalWidth/(cur.fw||frameEl.naturalWidth);
+  lctx.drawImage(frameEl, x*k-src/2, y*k-src/2, src, src, 0,0,S,S);
+  lctx.strokeStyle='#6aa9ff'; lctx.lineWidth=1.5; lctx.beginPath();
+  lctx.moveTo(S/2,S/2-26); lctx.lineTo(S/2,S/2-5); lctx.moveTo(S/2,S/2+5); lctx.lineTo(S/2,S/2+26);
+  lctx.moveTo(S/2-26,S/2); lctx.lineTo(S/2-5,S/2); lctx.moveTo(S/2+5,S/2); lctx.lineTo(S/2+26,S/2); lctx.stroke();
+  let lx=e.clientX+26, ly=e.clientY-186;
+  if(lx+170>innerWidth) lx=e.clientX-186; if(ly<8) ly=e.clientY+26;
+  loupe.style.left=lx+'px'; loupe.style.top=ly+'px'; loupe.style.display='block';
+}
+
+function nextUnplaced(){
+  const list=primary.filter(s=>s.frame);
+  const i = cur ? list.indexOf(cur) : -1;
+  if(cur){ const sl=cur.screens.find(x=>x!==slot && !placementFor(cur.plate,x)); if(sl){ pickSlot(sl); return; } }
+  for(let j=1;j<=list.length;j++){ const s=list[(i+j)%list.length];
+    if(countPlaced(s)<s.screens.length){ openShot(s); return; } }
+  if(cur) closeShot();
+  $('stat').textContent += ' · every screen is placed';
+}
+
+$('ovClear').onclick=()=>{ pts=[]; act=-1; setPlacement(cur.plate, slot, null, null); pickSlot(slot); };
+$('ovDone').onclick=closeShot; $('ovNext').onclick=nextUnplaced; $('next').onclick=nextUnplaced;
+$('only').onclick=()=>{ onlyScreens=!onlyScreens; $('only').classList.toggle('on',onlyScreens); build(); };
+
+addEventListener('keydown', e=>{
+  if(!cur || e.metaKey || e.ctrlKey || e.altKey) return;        // only while the picker is open
+  const step=e.shiftKey?5:1, mv={ArrowLeft:[-step,0],ArrowRight:[step,0],ArrowUp:[0,-step],ArrowDown:[0,step]}[e.key];
+  if(e.key==='Escape'){ closeShot(); }
+  else if(e.key==='n'){ nextUnplaced(); }
+  else if(e.key==='u'){ if(pts.length){ pts.pop(); act=-1; setPlacement(cur.plate, slot, null, null); drawAll(); } }
+  else if(mv && act>=0){ e.preventDefault();
+    pts[act]=[Math.min(cur.fw,Math.max(0,pts[act][0]+mv[0])), Math.min(cur.fh,Math.max(0,pts[act][1]+mv[1]))];
+    if(pts.length===4) commit(); drawAll(); }
+});
+
+// ---- carrying the work ---------------------------------------------------------------------------
+$('save').onclick=()=>{
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(saved,null,1)],{type:'application/json'}));
+  a.download='screens.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+};
+$('load').onclick=()=>$('file').click();
+$('file').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader();
+  r.onload=()=>{ try{ const d=JSON.parse(r.result); let n=0;
+      Object.keys(d).forEach(k=>{ const pl=normalise(d[k]); if(pl.length){ saved[k]={placements:pl}; n+=pl.length; } });
+      persist(); build(); $('stat').textContent += ` · imported ${n}`;
+    }catch(err){ alert('That file is not a screens.json: '+err.message); } };
+  r.readAsText(f); e.target.value=''; };
+
+let rz; addEventListener('resize',()=>{ clearTimeout(rz); rz=setTimeout(()=>{ stages.forEach(x=>fitStage(x.el,x.shot)); drawAll(); },120); });
+addEventListener('scroll',()=>{ try{ sessionStorage.setItem(KEY+'-y', String(scrollY)); }catch(e){} }, {passive:true});
+
+$('warn').hidden = canRemember;
+build();
+try{ const y=+sessionStorage.getItem(KEY+'-y'); if(y) scrollTo(0,y); }catch(e){}
+const want = decodeURIComponent(location.hash.slice(1));
+if(want){ const s=primary.find(x=>x.plate===want); if(s && s.frame) openShot(s); }
+</script>

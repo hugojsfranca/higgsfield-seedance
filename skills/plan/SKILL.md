@@ -24,7 +24,8 @@ A film is dozens of generations that have to stay consistent, affordable and in 
 - **List every scene** with its intended duration, and check the durations add up to the runtime.
 - **Voiceover:** keep it to about 2–2.5 words per second of each window, and flag lines that can't fit. In a film, the voiceover and music belong to the edit, not to the clips: generate location sound only unless a clip truly needs its own.
 - **Camera conflicts:** details the stated camera can't see. Flag each one and say which reading protects the edit.
-- **Brands and real interfaces:** real product names, logos and UIs stay out of prompts. Screens become plates for compositing.
+- **Brands and real interfaces:** real product names, logos and UIs stay out of prompts. Screens become plates for compositing. Ask whether the audience must recognise real products (an internal demo usually must): if so, the interfaces are built as HTML and placed on the plates, free of credits (`film-planning.md`, *Screens made for compositing*).
+- **Cast and wardrobe:** ask who the audience should see (age, region, how polished), and state that clothing carries no logos, words or graphics. Propose the cast in words before generating anyone.
 - **Story payoffs:** note any beat whose removal would break a later payoff.
 - **Who speaks on camera:** separate on-camera dialogue (lip-sync, a readable face, usually Seedance 2.0) from narration laid in during the edit. Flag scenes that ask for several beats of acting in a clip too short to hold them (`${CLAUDE_PLUGIN_ROOT}/references/acting.md`, *How much acting a clip holds*).
 - **Brief-change log:** every beat you drop, merge or change goes into one list the user sees.
@@ -49,6 +50,14 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/shotlist_check.py shotlist.csv --film-seco
 
 It checks that timings run continuously, durations and modes are legal for each model, IDs are unique, slice windows are noted and every prompt and keyframe file exists, and it gives a first-pass credit estimate.
 
+Write `scenes.csv` beside it (`scene,title,vo,copy,understand`, one row per scene, from the brief), then build the storyboard page. **Every project gets one, from this moment on**, even with no image made:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/storyboard.py --project .
+```
+
+The user manages the scenes there: order, timings, voice-over, on-screen copy, a decision and a note per shot. Rebuild it after every stage, and read their exported notes before changing anything (`film-planning.md`, *The storyboard page*).
+
 ## 4. Asset bible and reference library
 
 - **IDs:** `CH01…` for characters, `OBJ01…` for objects and `ENV01…` for places, each with one exact prompt line used word for word everywhere.
@@ -61,7 +70,8 @@ It checks that timings run continuously, durations and modes are legal for each 
   - exact objects → GPT Image 2 (about 6.5 at high quality).
 
   Keep each type prefix to one short register line.
-- **Order:** approve each master portrait first, then build every other view and every keyframe with it attached as `--image-references`.
+- **Order:** make one image per person and show the whole cast side by side. **Nothing else is made of anyone until the user approves that sheet.** Then build every other view and every keyframe with the approved image attached as `--image-references`, one view per person per keyframe. The rules that save re-rolls (colour spreading across garments, gender before wardrobe, words that invite logos, mirrored profiles, silent failures) are in `image-prompts.md`, *Casting and references: field rules*.
+- **Soul Cast** always runs at `--budget 200`: same price, far better people. Never price it with `generate cost`, which charges.
 - **Manifest:** record each approved pick and resolve files only through it, so candidates never get picked up by mistake:
 
 ```bash
@@ -87,7 +97,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/assets.py resolve CH01:portrait
 
 ## 7. Gates and run scripts
 
-- **Stages:** free prep → canaries → reference library → keyframes → drafts → picture lock → finals → post, each ending at a gate the user approves (table in `film-planning.md`).
+- **Stages:** free prep → canaries → reference library (cast approved first) → storyboard at the draft tier, reviewed in `storyboard.html` → keyframes → drafts → picture lock → finals → post, each ending at a gate the user approves (table in `film-planning.md`).
 - **Run scripts:** start each act's script from `${CLAUDE_PLUGIN_ROOT}/scripts/film_run_template.sh`. Copy it next to the act's `prompts/` and `keyframes/`, fill in its clip table, and set `SKILL_DIR` to the plugin folder (or a pinned copy of it). It lints, prices, runs a canary alone, then batches, with numbered takes, `DRY=1`, y/N confirmations and gate markers. It handles Seedance and the Cinema Studio video engines, and a clip's look controls can name harvested IDs (`@genre:Drama`).
 - **Resolution:** draft at 480p, keep the approved take and upscale it. Re-render natively at 720p only for hero UI plates, the end plate and shots held on screen for about 1.2 s or longer. Always `--bitrate_mode high`.
 - **Paid runs** follow the confirmation rules in `higgsfield-seedance:generate`: show the prompt, settings and cost first.
@@ -100,9 +110,10 @@ Once everything is written, do one review pass across the whole film: continuity
 
 Hand the user a folder they can run from:
 - `plan.md` with routing, the asset bible, the brief-change log, budget scenarios, the run order and open questions;
-- `shotlist.csv` passing `shotlist_check.py`;
+- `shotlist.csv` passing `shotlist_check.py`, and `scenes.csv`;
+- `storyboard.html`, built with `scripts/storyboard.py`, which is where the user reviews and answers;
 - `assets/` with the reference prompts;
 - one folder per act with `prompts/`, `keyframes/`, notes and its run script;
 - the review and fix log.
 
-End with the decisions the user must make before any credits are spent, and the cost of the first gated stage.
+End with the decisions the user must make before any credits are spent, the cost of the first gated stage, and the path of the project folder and its `storyboard.html`. Give that path again every time a stage finishes. No video is generated until the user has closed the storyboard and said so.

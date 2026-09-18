@@ -5,6 +5,7 @@ Read this when a brief runs to more than a handful of clips, has recurring chara
 ## Contents
 
 - [The pipeline and its gates](#the-pipeline-and-its-gates)
+- [The storyboard page](#the-storyboard-page)
 - [The shot list](#the-shot-list)
 - [The asset bible](#the-asset-bible)
 - [Building the reference library](#building-the-reference-library)
@@ -22,14 +23,31 @@ Each stage ends at a gate: the user approves before the next stage spends anythi
 |---|---|---|
 | 0. Free prep | Scratch voiceover, temp music, an animatic from storyboard frames, locked scene durations. Every prompt drafted and linted. `generate cost` run for each model and setting. | Timing and open questions answered |
 | 1. Canaries | Upscale test on an existing take. Face tests (below). One screen plate. One object-reference test, which also settles `@Image` numbering next to a start frame. | Routing, upscale path and reference behaviour locked |
-| 2. Reference library | Character sheets, continuity objects, environment masters. | Contact sheets approved |
-| 3. Keyframes | One still per clip, built from the library. | Per-act contact sheet and updated animatic |
+| 2. Reference library | The cast first, one image per person, approved side by side. Only then the other views, continuity objects and environment masters. | Cast sheet approved, then contact sheets approved |
+| 3. Storyboard | One still per clip at the draft tier (`image-prompts.md`), built from the library. Real interfaces built as HTML and placed on the plates. Reviewed in `storyboard.html`. | The user's decisions and notes, exported from the page, applied to the plan |
+| 3b. Keyframes | The surviving stills re-made at the final tier where they become start frames; hero plates first. | Per-act contact sheet and updated animatic |
 | 4. Drafts | Clips in batches of about six. The first clip of each new risk type (a new camera move, a two-person shot, a vehicle) runs alone first. | Per-act rough cut |
 | 5. Picture lock | Full edit with scratch VO and temp UI. | Last cheap point for changes |
 | 6. Finals | Upscales, plus the few re-renders that earn native 720p or 1080p. | Large-screen check |
 | 7. Post | UI compositing, copy, end card, grade, final VO, music, sound. | Delivery |
 
 Hold back a credit floor (e.g. 500) that isn't touched until picture lock. If spend passes the plan by about 15% before lock, stop and re-plan with the user.
+
+## The storyboard page
+
+`storyboard.html` is the user's view of the film and the way their decisions reach you. **Build it the moment `shotlist.csv` exists, in every project, and rebuild it after every stage:**
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/storyboard.py --project <film folder>
+```
+
+With no frames yet it is the plan on paper: scenes in order, timings, voice-over, on-screen copy, every shot with its cut window. Frames appear as they are generated (the approved still in `<act>/keyframes/<ID>.png`, else the newest `candidates/<ID>_<tier>_t<N>.png`, else the manifest for `ENV05:view` starts), and composited plates replace blank ones.
+
+- **What the user does there:** Keep / Change / Regenerate / Cut and a note on each shot; a note on each scene; the voice-over and on-screen copy edited in place, with a words-per-second check against the scene's length. Everything survives a refresh, and notes follow their frame if shots are renumbered.
+- **How it comes back:** *Download notes* writes `storyboard-notes-<date>.json` to the user's Downloads; *Copy for Claude* gives the same as text. Read the newest file, apply every item, log text changes in the brief-change log, rebuild the page. Regenerate means same idea, new take. Change means edit the prompt first. Cut means the row leaves the shot list and the timings close up.
+- **`scenes.csv`** feeds the text: `scene,title,vo,copy,understand`, one row per scene, written by the planner from the brief. `vo` is the narration, `copy` the on-screen words, `understand` the one thing the viewer must take from the scene. Leave a cell empty rather than writing "none".
+- **Opening it:** the file opens straight from the Finder. The browser keeps notes per address, so the user should stay with one way of opening it; Download and Import carry notes between them.
+- **Tell the user where it is.** Every time a stage finishes, give the folder path and the page.
 
 ## The shot list
 
@@ -114,6 +132,11 @@ Write each 2.5 face test as its own prompt variant (e.g. `S09_A_T1`) with no fac
   - Keep all four corners in frame.
   - Keep the camera locked or slow.
   - Allow one gesture per clip (a tap, or a single drag).
+- **Real products, when the audience must recognise them.** For an internal demo the viewers need to see *their* SAP, Salesforce or ServiceNow. The rule stands that no real interface is ever written into a generation prompt. Instead build each screen as a plain HTML file, render it to PNG with headless Chrome (free, no credits, exact text), and place it on the blank glass:
+  - keep one `ui/facts.md` with the story's data (order numbers, names, dates), so every screen tells the same story;
+  - keep `ui/mapping.md` as a table `| Shot | Plate | Screen | Note |`. `A + B` in the Screen cell is two separate screens on one plate; `A → B` is one glass that changes state during the shot;
+  - copy `${CLAUDE_PLUGIN_ROOT}/scripts/screens/composite.py` and `corners.html` into the project's `ui/`, and `place-screens.sh` into the project root. The user clicks the four corners of each glass in `corners.html` (any order, drag to adjust, arrow keys to nudge), downloads `screens.json`, and `python3 ui/composite.py --pull --all` writes `ui/composites/<plate>.png`, which the storyboard then shows;
+  - this is the storyboard's compositing. The film's is done in post from the same PNGs and the tap maps. Check the usage terms of any real product UI before the film leaves the building.
 - **Use a still where you can.** When the UI moment is static, a still plus a slow push in post beats a generated clip.
 - **Resolution:** hero UI plates earn 720p re-renders, because compositing needs clean edges.
 - **Tap map:** deliver one with the prompts. For each gesture, give the contact point in screen terms, the clip time and the UI it drives. A drag plus a tap needs 6 s or two clips.

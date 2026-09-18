@@ -9,6 +9,8 @@ Models, rules, building blocks and templates for stills: character references, l
 - [Rules for generation prompts](#rules-for-generation-prompts)
 - [Building blocks](#building-blocks)
 - [Templates](#templates)
+- [Casting and references: field rules](#casting-and-references-field-rules)
+- [Draft tier for a storyboard](#draft-tier-for-a-storyboard)
 - [Edits](#edits)
 - [Checklist](#checklist)
 - [Unverified](#unverified)
@@ -22,7 +24,7 @@ Prices are `generate cost` estimates from one account in September 2026; plans c
 | Soul 2.0 (`text2image_soul_v2`) | 1 image, or a Soul ID via `--soul-id` | 1:1, 16:9, 9:16, 4:3, 3:4, 3:2, 2:3 (**no 21:9**) | `--quality 1.5k` or `2k` | ~0.12 | Characters, portraits, casting, fashion and UGC looks |
 | Soul Cinematic (`soul_cinematic`; "Soul Cinema" in the web app) | 1 image, or `--soul-id` | as Soul 2.0 **plus 21:9** | `--quality 1.5k` or `2k` | ~0.12 | Cinematic stills and mood frames, 21:9 plates, a Soul ID character inside a scene |
 | Soul Location (`soul_location`) | none (prompt only) | as above plus 21:9 and 9:21 | none | ~0.12 | People-free locations and environment plates |
-| Soul Cast (`soul_cast`) | none; prompt optional, `--budget` | 16:9 only | none | ~0.12 at budget 50 | A quick invented persona (the web app's AI Cast) |
+| Soul Cast (`soul_cast`) | none; prompt optional, `--budget` | 16:9 only | none | ~0.12 at any budget | An invented persona as a three-panel sheet: full body front, back, portrait (the web app's AI Cast). **Always `--budget 200`**: the price is the same at 50, 100 and 200, the quality is not |
 | Nano Banana Pro (`nano_banana_pro`) | up to 14 images | all common plus 21:9, 4:5, 5:4 | `--resolution 1k`/`2k`/`4k` | 2 (4 at 4k) | First choice for edits; reference-driven keyframes and views; props with legible text |
 | Nano Banana 2 (`nano_banana_flash`) | images; inpaint with `--is_inpaint` and a mask | as Pro plus `auto` | `--resolution` (default 1k) | 1.5 (2 at 2k) | Cheap reference-driven drafts and views |
 | Seedream 4.5 (`seedream_v4_5`) | up to 14 images | 1:1, 4:3, 16:9, 3:2, 21:9, 3:4, 9:16, 2:3 | `--quality basic` or `high` | 1 | A texture pass on a finished still |
@@ -180,6 +182,40 @@ Plain unbranded steel, blank matte grip band. Clean modern digital capture, true
 
 Separate states (clean, damaged, wet) are separate assets. Describe device-like props by material and function rather than weapon or explosive terms, which can trip safety filters.
 
+## Casting and references: field rules
+
+Measured on a 10-person cast, 16 extra views and 67 keyframes in September 2026. Each one cost re-rolls before it was understood.
+
+**Approve the cast before building on it.** Make one image per person, put the whole cast side by side on one contact sheet, and stop. The user approves faces and wardrobe together, because people are judged against each other: ten good portraits can still be ten people in the same grey jacket. Make no profile, back view or keyframe of anyone until that sheet is approved. Once it is, copy the approved wardrobe wording into the bible and propagate it to every prompt by exact-string replacement.
+
+**Who the cast is, is the user's call.** Age, region, how polished people look and how they dress belong to the film's audience and purpose. Propose a cast in words first (one line per person: age, look, wardrobe, colour), get it agreed, then generate. It is cheaper than generating three casts.
+
+**Wardrobe:**
+- **No logos, words or graphics on clothing**, stated positively in every character line: "plain, unbranded fabric". Words such as *polo*, *lanyard*, *badge*, *uniform*, *hi-vis vest with company name* invite invented lettering. Name the garment by cut and cloth instead.
+- **A strong colour spreads.** "Burgundy jacket" comes back as a burgundy suit, "salmon shirt" as salmon trousers. Name the other garment as a different *category* of clothing with its own colour and cloth: "dark indigo denim jeans", "charcoal wool trousers", "a grey knit".
+- **Vary the cast deliberately.** Different colours, and a cut that follows the person's job and build: tailored for the account lead, workwear with room to move for the technician. One solution applied to everyone (all loose, all fitted, all in the brand palette) reads as a uniform.
+- **Gender and build come before wardrobe** in the sentence. With a workwear jacket or a suit described first, the model drifts male. "An unmistakably feminine woman in her early thirties, …" then the clothes.
+- **Glasses deform** at low quality settings and in small figures. Leave them out unless they matter.
+- **Studio register for studio portraits.** A register line about "a real working location, mid-task" turns a portrait into a full-length location shot. Portraits use the studio register and describe clothing above the waist only.
+
+**References:**
+- **One view per person per keyframe.** Attaching a portrait *and* a full-body view of the same person produces two of them in the frame, often one of them incomplete. Pick the view closest to how the person is seen in the shot.
+- **The model ignores left and right on a profile.** Every profile came back facing the same way. Generate one profile, mirror it for the other side, and record both in the manifest. Mirroring is only wrong for asymmetric details (a scar, a parting, a badge side), so keep identity marks symmetric or fix them after.
+- **Invented identity marks stay out of view prompts.** A mole or scar that is not in the approved portrait makes the new view a different person.
+- **A job that fails with no reason** is usually the prompt length or one reference. Retry once unchanged, then shorten the prompt to the camera, the people and the light, then drop references one at a time (an object reference is the usual culprit). Keep the short version as the keyframe's prompt file, so a later run does not fail the same way.
+- **Multi-panel sheets differ in layout** (with dividers or without). Split them by finding the empty bands between figures, not by cutting at thirds.
+
+## Draft tier for a storyboard
+
+A storyboard needs the composition, not the finish. Generate every keyframe once at the cheapest reference-driven setting, review the film as a whole, and pay for quality only on the frames that survive.
+
+| Tier | Model | Setting | Credits | Use |
+|---|---|---|---|---|
+| draft | `nano_banana_flash` | `--resolution 1k` | 1.5 | Every keyframe, for the storyboard |
+| final | `nano_banana_pro` | `--resolution 2k` | 2 | Approved keyframes that become start frames, hero plates first |
+
+Name takes `candidates/<KEYFRAME>_<tier>_t<N>.png` so nothing is overwritten and `scripts/storyboard.py` always shows the newest. If the draft model refuses a full-body reference, fall back to the portrait. A 67-frame storyboard is about 100 credits before re-rolls.
+
 ## Edits
 
 **Order:**
@@ -239,6 +275,9 @@ ONLY CHANGE: the hat. 100% identical otherwise.
 - [ ] Keyframes: the clip's field of view, distance and height; people mid-action; faces small or turned for 2.5
 - [ ] Identity from a Soul ID or reference; no real names, brands or IP
 - [ ] One photograph per prompt (sheets only for approval)
+- [ ] Keyframes: one reference view per person, never two of the same person
+- [ ] Clothing described plain: no logos, words or graphics, and no garment word that invites them
+- [ ] The whole cast approved side by side before any further view of anyone is made
 - [ ] Linted with `preflight.py --image` (`--sheet` / `--edit` where relevant)
 
 ## Unverified
@@ -248,4 +287,4 @@ Test once before relying on these:
 - **Numbered references:** how Nano Banana Pro maps several attached references to wording in the prompt. That's why the templates refer to references in words.
 - **Seedream 4.5's role:** LIRA keeps it to texture passes, but Higgsfield's own `higgsfield-generate` skill also routes face edits and scene swaps to it.
 - **Palettes:** whether percentage palettes are followed equally by every model.
-- **Soul Cast:** what `--budget` controls.
+- **Soul Cast:** what `--budget` controls internally. Measured on 18 September 2026: the price does not move, and 50 produced wrong genders, invented lettering and deformed glasses where 200 did not.
