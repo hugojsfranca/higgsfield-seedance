@@ -1,6 +1,6 @@
 {
   "name": "higgsfield-seedance",
-  "description": "Generate, prompt, plan, image, studio and edit actions for ByteDance Seedance 2.5 / 2.0 and Higgsfield Cinema Studio videos, with shot direction, acting direction, image-prompt routing and Cinema Studio look controls.",
+  "description": "Direct, prompt, plan and produce AI video on Higgsfield with Claude: ByteDance Seedance 2.5 / 2.0 and Cinema Studio clips, plus the keyframes, character references and image edits that feed them. Shot and acting direction, a prompt linter, free price checks before any spend, and full film planning: shot list, asset bible, a storyboard page to review and annotate, budget scenarios, approval gates and staged run scripts.",
   "version": "1.3.0",
   "author": {
     "name": "Hugo França"
@@ -17,6 +17,8 @@
     "film-planning",
     "acting",
     "image-prompts",
-    "cinema-studio"
+    "cinema-studio",
+    "storyboard",
+    "claude-code"
   ]
 }
